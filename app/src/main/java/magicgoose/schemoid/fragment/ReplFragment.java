@@ -3,17 +3,29 @@ package magicgoose.schemoid.fragment;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.Toast;
+import android.widget.TextView;
+
+import java.util.ArrayList;
 
 import magicgoose.schemoid.R;
+import magicgoose.schemoid.TheApp;
+import magicgoose.schemoid.scheme.ISchemeRunner;
+import rx.Subscription;
+import rx.android.schedulers.AndroidSchedulers;
 
 public class ReplFragment extends Fragment {
 
     private EditText codeEditText;
+    private ISchemeRunner schemeRunner;
+    private Subscription schemeOutputSubscription;
+    private LogAdapter logAdapter;
 
     @Override
     public void onCreate(final Bundle savedInstanceState) {
@@ -30,6 +42,8 @@ public class ReplFragment extends Fragment {
     @Override
     public void onViewCreated(final View view, @Nullable final Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        final FragmentActivity ctx = getActivity();
+
         codeEditText = (EditText) view.findViewById(R.id.code_input);
 
         view.findViewById(R.id.eb_eval).setOnClickListener(this::evalClick);
@@ -39,6 +53,20 @@ public class ReplFragment extends Fragment {
 
         view.findViewById(R.id.eb_left_paren).setOnClickListener(this::parenClick);
         view.findViewById(R.id.eb_right_paren).setOnClickListener(this::parenClick);
+
+        final RecyclerView logView = ((RecyclerView) view.findViewById(R.id.code_output));
+        logAdapter = new LogAdapter(logView);
+        logView.setLayoutManager(new LinearLayoutManager(ctx, LinearLayoutManager.VERTICAL, false));
+        logView.setAdapter(logAdapter);
+
+        schemeRunner = TheApp.getInstance().getSchemeRunner();
+        schemeOutputSubscription = schemeRunner.getOutputs().
+                observeOn(AndroidSchedulers.mainThread())
+                .subscribe(this::onSchemeOutput);
+    }
+
+    private void onSchemeOutput(String output) {
+        logAdapter.appendItem(new LogItem(true, output));
     }
 
     private void parenClick(final View view) {
@@ -50,6 +78,10 @@ public class ReplFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         this.codeEditText = null;
+        this.schemeRunner = null;
+        schemeOutputSubscription.unsubscribe();
+        schemeOutputSubscription = null;
+        logAdapter = null;
     }
 
     private void arrowClick(final View view) {
@@ -65,6 +97,69 @@ public class ReplFragment extends Fragment {
     }
 
     private void evalClick(final View view) {
-        Toast.makeText(getActivity(), "Coming soon!", Toast.LENGTH_SHORT).show();
+        final String text = this.codeEditText.getText().toString().trim();
+        if (text.length() == 0)
+            return;
+        this.logAdapter.appendItem(new LogItem(false, text));
+        this.codeEditText.getText().clear();
+        this.schemeRunner.pushInput(text);
+    }
+
+    private static class LogItem {
+        public final boolean isReply;
+        public final String text;
+
+        private LogItem(final boolean isReply, final String text) {
+            this.isReply = isReply;
+            this.text = text;
+        }
+    }
+
+    private static class LogAdapter extends RecyclerView.Adapter<LogItemVH> {
+
+        private final ArrayList<LogItem> items = new ArrayList<>();
+        private final RecyclerView logView;
+
+        public LogAdapter(final RecyclerView logView) {
+            this.logView = logView;
+        }
+
+        public void appendItem(LogItem item) {
+            final int prevSize = items.size();
+            items.add(item);
+            notifyItemInserted(prevSize);
+            logView.scrollToPosition(prevSize);
+        }
+
+        @Override
+        public LogItemVH onCreateViewHolder(final ViewGroup parent, final int viewType) {
+            final TextView view = (TextView) LayoutInflater.from(parent.getContext()).inflate(R.layout.log_item, parent, false);
+            return new LogItemVH(view);
+        }
+
+        @Override
+        public void onBindViewHolder(final LogItemVH holder, final int position) {
+            holder.updateFor(items.get(position));
+        }
+
+        @Override
+        public int getItemCount() {
+            return items.size();
+        }
+    }
+
+    private static class LogItemVH extends RecyclerView.ViewHolder {
+
+        public LogItemVH(final View itemView) {
+            super(itemView);
+        }
+
+        public void updateFor(final LogItem logItem) {
+            final TextView view = (TextView) this.itemView;
+            view.setText(logItem.text);
+            view.setBackgroundResource(logItem.isReply ?
+                    R.color.log_background_output :
+                    R.color.log_background_input);
+        }
     }
 }

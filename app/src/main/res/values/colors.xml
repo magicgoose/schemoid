@@ -4,4 +4,7 @@
 
     <color name="editor_button_normal">#e0e0e0</color>
     <color name="editor_button_border">#616161</color>
+
+    <color name="log_background_input">#c2dce1</color>
+    <color name="log_background_output">#e1dac1</color>
 </resources>

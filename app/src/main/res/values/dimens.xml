@@ -5,4 +5,5 @@
 
     <dimen name="editor_button_size">50dp</dimen>
     <dimen name="editor_button_border_size_half">1dp</dimen>
+    <dimen name="code_log_item_padding">8dp</dimen>
 </resources>

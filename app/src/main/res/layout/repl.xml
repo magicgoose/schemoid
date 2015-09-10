@@ -10,13 +10,14 @@
         tools:context=".MainActivity">
 
         <android.support.v7.widget.RecyclerView
+            style="@style/ExecutionLog"
+            android:id="@+id/code_output"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            style="@style/ExecutionLog"
             />
 
-        <include layout="@layout/divider_horizontal"/>
+        <include layout="@layout/divider_horizontal_thick"/>
 
         <EditText
             style="@style/CodeInput"

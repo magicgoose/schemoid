@@ -5,4 +5,21 @@
         <!-- Customize your theme here. -->
     </style>
 
+    <style name="CodeInput">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:maxLines">10</item>
+        <item name="android:minLines">4</item>
+        <item name="android:gravity">bottom</item>
+        <item name="android:typeface">monospace</item>
+        <item name="android:inputType">textMultiLine|textNoSuggestions</item>
+        <item name="android:hint">@string/code_input_hint</item>
+    </style>
+
+    <style name="ExecutionLog">
+        <item name="android:background">@color/execution_log_background</item>
+    </style>
+
+    <string name="code_input_hint">type Scheme code here</string>
+
 </resources>

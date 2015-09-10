@@ -26,6 +26,7 @@ public class ReplFragment extends Fragment {
     private ISchemeRunner schemeRunner;
     private Subscription schemeOutputSubscription;
     private LogAdapter logAdapter;
+    private View editorButtons;
 
     @Override
     public void onCreate(final Bundle savedInstanceState) {
@@ -44,7 +45,10 @@ public class ReplFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         final FragmentActivity ctx = getActivity();
 
+        editorButtons = view.findViewById(R.id.editor_buttons);
         codeEditText = (EditText) view.findViewById(R.id.code_input);
+        codeEditText.setOnFocusChangeListener(this::handleCodeEditTextFocusChange);
+        handleCodeEditTextFocusChange(codeEditText, codeEditText.hasFocus());
 
         view.findViewById(R.id.eb_eval).setOnClickListener(this::evalClick);
 
@@ -65,6 +69,10 @@ public class ReplFragment extends Fragment {
                 .subscribe(this::onSchemeOutput);
     }
 
+    private void handleCodeEditTextFocusChange(final View view, final boolean hasFocus) {
+        editorButtons.setVisibility(hasFocus ? View.VISIBLE : View.GONE);
+    }
+
     private void onSchemeOutput(String output) {
         logAdapter.appendItem(new LogItem(true, output));
     }
@@ -82,6 +90,7 @@ public class ReplFragment extends Fragment {
         schemeOutputSubscription.unsubscribe();
         schemeOutputSubscription = null;
         logAdapter = null;
+        editorButtons = null;
     }
 
     private void arrowClick(final View view) {

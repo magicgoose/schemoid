@@ -7,4 +7,5 @@
 
     <color name="log_background_input">#c2dce1</color>
     <color name="log_background_output">#e1dac1</color>
+    <color name="log_background">#dedede</color>
 </resources>

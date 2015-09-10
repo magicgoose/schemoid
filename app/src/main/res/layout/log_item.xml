@@ -6,4 +6,7 @@
           android:typeface="monospace"
           android:textSize="14sp"
           android:padding="@dimen/code_log_item_padding"
+          android:focusable="true"
+          android:focusableInTouchMode="true"
+          android:clickable="true"
     />

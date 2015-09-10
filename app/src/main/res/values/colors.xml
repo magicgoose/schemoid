@@ -6,6 +6,7 @@
     <color name="editor_button_border">#616161</color>
 
     <color name="log_background_input">#c2dce1</color>
-    <color name="log_background_output">#e1dac1</color>
+    <color name="log_background_output">#d6e1c0</color>
+    <color name="log_background_error_output">#d8a5a4</color>
     <color name="log_background">#dedede</color>
 </resources>

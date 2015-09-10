@@ -17,6 +17,8 @@ import java.util.ArrayList;
 import magicgoose.schemoid.R;
 import magicgoose.schemoid.TheApp;
 import magicgoose.schemoid.scheme.ISchemeRunner;
+import magicgoose.schemoid.scheme.SchemeLogItem;
+import magicgoose.schemoid.scheme.SchemeLogItemKind;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 
@@ -73,8 +75,8 @@ public class ReplFragment extends Fragment {
         editorButtons.setVisibility(hasFocus ? View.VISIBLE : View.GONE);
     }
 
-    private void onSchemeOutput(String output) {
-        logAdapter.appendItem(new LogItem(true, output));
+    private void onSchemeOutput(SchemeLogItem output) {
+        logAdapter.appendItem(output);
     }
 
     private void parenClick(final View view) {
@@ -109,31 +111,20 @@ public class ReplFragment extends Fragment {
         final String text = this.codeEditText.getText().toString().trim();
         if (text.length() == 0)
             return;
-        this.logAdapter.appendItem(new LogItem(false, text));
         this.codeEditText.getText().clear();
         this.schemeRunner.pushInput(text);
     }
 
-    private static class LogItem {
-        public final boolean isReply;
-        public final String text;
-
-        private LogItem(final boolean isReply, final String text) {
-            this.isReply = isReply;
-            this.text = text;
-        }
-    }
-
     private static class LogAdapter extends RecyclerView.Adapter<LogItemVH> {
 
-        private final ArrayList<LogItem> items = new ArrayList<>();
+        private final ArrayList<SchemeLogItem> items = new ArrayList<>();
         private final RecyclerView logView;
 
         public LogAdapter(final RecyclerView logView) {
             this.logView = logView;
         }
 
-        public void appendItem(LogItem item) {
+        public void appendItem(SchemeLogItem item) {
             final int prevSize = items.size();
             items.add(item);
             notifyItemInserted(prevSize);
@@ -163,12 +154,22 @@ public class ReplFragment extends Fragment {
             super(itemView);
         }
 
-        public void updateFor(final LogItem logItem) {
+        public void updateFor(final SchemeLogItem logItem) {
             final TextView view = (TextView) this.itemView;
-            view.setText(logItem.text);
-            view.setBackgroundResource(logItem.isReply ?
-                    R.color.log_background_output :
-                    R.color.log_background_input);
+            view.setText(logItem.content);
+            view.setBackgroundResource(getLogItemColorResId(logItem.kind));
+        }
+
+        private int getLogItemColorResId(final SchemeLogItemKind kind) {
+            switch (kind) {
+                case Input:
+                    return R.color.log_background_input;
+                case Output:
+                    return R.color.log_background_output;
+                case ErrorOutput:
+                    return R.color.log_background_error_output;
+            }
+            throw new IllegalArgumentException();
         }
     }
 }

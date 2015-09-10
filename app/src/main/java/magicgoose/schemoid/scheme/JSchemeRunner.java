@@ -18,7 +18,7 @@ import rx.subjects.ReplaySubject;
 
 public class JSchemeRunner implements ISchemeRunner {
 
-    private final ReplaySubject<String> outputsSubject = ReplaySubject.create();
+    private final ReplaySubject<SchemeLogItem> outputsSubject = ReplaySubject.create();
 
     private final JScheme jsc = new JScheme();
 
@@ -42,39 +42,48 @@ public class JSchemeRunner implements ISchemeRunner {
     }
 
     @Override
-    public Observable<String> getOutputs() {
+    public Observable<SchemeLogItem> getOutputs() {
         return outputsSubject;
     }
 
     @Override
     public void pushInput(final String input) {
+        outputsSubject.onNext(new SchemeLogItem(SchemeLogItemKind.Input, input));
         es.submit(() -> doProcessString(input));
     }
 
     private void doProcessString(final String input) {
-        final String result = doEvalString(input);
+        final SchemeLogItem result = doEvalString(input);
         outputsSubject.onNext(result);
     }
 
-    private String doEvalString(final String input) {
+    private SchemeLogItem doEvalString(final String input) {
         try {
             final Object ret = jsc.eval(input);
             if (ret == jsint.Primitive.DO_NOT_DISPLAY) {
-                return "<ok>";
+                return outputLogItem("<ok>");
             } else {
-                return jsint.U.stringify(ret);
+                return outputLogItem(jsint.U.stringify(ret));
             }
         } catch (final jscheme.SchemeException e) {
-            return e.getMessage();
+            return errorLogItem(e.getMessage());
         } catch (final jsint.BacktraceException e) {
-            return e.getMessage();
+            return errorLogItem(e.getMessage());
         } catch (final Exception e) {
-            return e.toString();
+            return errorLogItem(e.toString());
         } catch (final Error e) {
-            return e.toString();
+            return errorLogItem(e.toString());
         } catch (final Throwable e) {
-            return e.toString();
+            return errorLogItem(e.toString());
         }
+    }
+
+    private SchemeLogItem errorLogItem(final String text) {
+        return new SchemeLogItem(SchemeLogItemKind.ErrorOutput, text);
+    }
+
+    private SchemeLogItem outputLogItem(final String text) {
+        return new SchemeLogItem(SchemeLogItemKind.Output, text);
     }
 
     @Override

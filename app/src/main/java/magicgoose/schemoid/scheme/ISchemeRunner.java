@@ -6,6 +6,6 @@ import java.io.Closeable;
 import rx.Observable;
 
 public interface ISchemeRunner extends Closeable {
-    Observable<String> getOutputs();
+    Observable<SchemeLogItem> getOutputs();
     void pushInput(String input);
 }

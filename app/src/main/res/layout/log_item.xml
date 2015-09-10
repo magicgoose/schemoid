@@ -9,4 +9,5 @@
           android:focusable="true"
           android:focusableInTouchMode="true"
           android:clickable="true"
+          android:textIsSelectable="true"
     />

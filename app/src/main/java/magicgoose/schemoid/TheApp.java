@@ -5,7 +5,6 @@ import android.support.annotation.NonNull;
 
 import java.io.IOException;
 
-import magicgoose.schemoid.scheme.DummySchemeRunner;
 import magicgoose.schemoid.scheme.ISchemeRunner;
 import magicgoose.schemoid.scheme.JSchemeRunner;
 

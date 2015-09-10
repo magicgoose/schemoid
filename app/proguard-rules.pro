@@ -1,17 +1,34 @@
-# Add project specific ProGuard rules here.
-# By default, the flags in this file are appended to flags specified
-# in /Users/sarge/Library/android-sdk/tools/proguard/proguard-android.txt
-# You can edit the include path and order by changing the proguardFiles
-# directive in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+-ignorewarnings
+-dontwarn **
+-keepattributes Signature
+-keepattributes *Annotation*
+-keep class sun.misc.Unsafe { *; }
+-keep class ** extends com.google.gson.reflect.TypeToken.TypeToken { *; }
 
-# Add any project specific keep options here:
+-keep class magicgoose.common.annotation.*
+-keep @magicgoose.common.annotation.Keep class * { *; }
+-keepclassmembers @magicgoose.common.annotation.Keep class * { *; }
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+-optimizations !code/simplification/arithmetic,!code/simplification/cast,!field/*,!class/merging/
+-optimizationpasses 6
+-allowaccessmodification
+
+-keep class dclass.** { *; }
+-keep interface dclass.** { *; }
+-keep class elf.** { *; }
+-keep interface elf.** { *; }
+-keep class jlib.** { *; }
+-keep interface jlib.** { *; }
+-keep class jscheme.** { *; }
+-keep interface jscheme.** { *; }
+-keep class jsint.** { *; }
+-keep interface jsint.** { *; }
+
+-keepclassmembers class rx.internal.util.unsafe.*ArrayQueue*Field* {
+    long producerIndex;
+    long consumerIndex;
+}
+-keepclassmembers class rx.internal.util.unsafe.BaseLinkedQueueProducerNodeRef {
+    long producerNode;
+    long consumerNode;
+}

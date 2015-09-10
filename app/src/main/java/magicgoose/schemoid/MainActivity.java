@@ -1,16 +1,26 @@
 package magicgoose.schemoid;
 
+import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import magicgoose.schemoid.fragment.ReplFragment;
+
 public class MainActivity extends AppCompatActivity {
+
+    private final static String ReplFragmentTag = "ReplFragment";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        final FragmentManager fm = getSupportFragmentManager();
+        if (fm.findFragmentByTag(ReplFragmentTag) == null) {
+            fm.beginTransaction()
+                    .add(android.R.id.content, new ReplFragment(), ReplFragmentTag)
+                    .commit();
+        }
     }
 
     @Override

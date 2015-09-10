@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
@@ -17,9 +17,18 @@
     </style>
 
     <style name="ExecutionLog">
-        <item name="android:background">@color/execution_log_background</item>
+    </style>
+
+    <style name="EditorButton">
+        <item name="android:layout_width">@dimen/editor_button_size</item>
+        <item name="android:layout_height">@dimen/editor_button_size</item>
+        <item name="android:background">@drawable/editor_button_background</item>
+        <item name="android:typeface">monospace</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textSize" tools:ignore="SpUsage">20dp</item>
+        <item name="android:clickable">true</item>
     </style>
 
     <string name="code_input_hint">type Scheme code here</string>
-
 </resources>

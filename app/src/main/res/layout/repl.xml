@@ -16,6 +16,8 @@
             style="@style/ExecutionLog"
             />
 
+        <include layout="@layout/divider_horizontal"/>
+
         <EditText
             style="@style/CodeInput"
             android:id="@+id/code_input"
@@ -23,9 +25,10 @@
 
     </LinearLayout>
 
-    <Button
-        android:layout_width="100dp"
-        android:layout_height="100dp"
+    <include
+        layout="@layout/editor_buttons"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_gravity="bottom|right"
         />
 

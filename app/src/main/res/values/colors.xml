@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="execution_log_background">#c0d0a1</color>
+    <color name="divider_color">#c4c4c4</color>
 
+    <color name="editor_button_normal">#cccccc</color>
+    <color name="editor_button_border">#616161</color>
 </resources>

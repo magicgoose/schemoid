@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:tools="http://schemas.android.com/tools"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:padding="@dimen/editor_button_border_size_half"
+              android:background="@color/editor_button_border"
+              android:orientation="horizontal"
+    >
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/eb_left_arrow"
+            style="@style/EditorButton"
+            android:text="←"
+            tools:ignore="HardcodedText"/>
+
+        <TextView
+            android:id="@+id/eb_left_paren"
+            style="@style/EditorButton"
+            android:text="("
+            tools:ignore="HardcodedText"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/eb_right_arrow"
+            style="@style/EditorButton"
+            android:text="→"
+            tools:ignore="HardcodedText"/>
+
+        <TextView
+            android:id="@+id/eb_right_paren"
+            style="@style/EditorButton"
+            android:text=")"
+            tools:ignore="HardcodedText"/>
+
+    </LinearLayout>
+
+
+</LinearLayout>

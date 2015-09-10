@@ -25,8 +25,9 @@
         <item name="android:background">@drawable/editor_button_background</item>
         <item name="android:typeface">monospace</item>
         <item name="android:textStyle">bold</item>
+        <item name="android:textColor">#535353</item>
         <item name="android:gravity">center</item>
-        <item name="android:textSize" tools:ignore="SpUsage">20dp</item>
+        <item name="android:textSize" tools:ignore="SpUsage">22dp</item>
         <item name="android:clickable">true</item>
     </style>
 

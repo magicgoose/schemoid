@@ -2,6 +2,6 @@
 <resources>
     <color name="divider_color">#c4c4c4</color>
 
-    <color name="editor_button_normal">#cccccc</color>
+    <color name="editor_button_normal">#e0e0e0</color>
     <color name="editor_button_border">#616161</color>
 </resources>

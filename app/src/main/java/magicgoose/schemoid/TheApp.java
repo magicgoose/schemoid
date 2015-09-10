@@ -1,11 +1,13 @@
 package magicgoose.schemoid;
 
 import android.app.Application;
+import android.support.annotation.NonNull;
 
 import java.io.IOException;
 
 import magicgoose.schemoid.scheme.DummySchemeRunner;
 import magicgoose.schemoid.scheme.ISchemeRunner;
+import magicgoose.schemoid.scheme.JSchemeRunner;
 
 public class TheApp extends Application {
 
@@ -18,9 +20,14 @@ public class TheApp extends Application {
 
     public ISchemeRunner getSchemeRunner() {
         if (schemeRunner == null) {
-            schemeRunner = new DummySchemeRunner();
+            schemeRunner = createSchemeRunner();
         }
         return schemeRunner;
+    }
+
+    @NonNull
+    private ISchemeRunner createSchemeRunner() {
+        return new JSchemeRunner(getResources());
     }
 
     @Override

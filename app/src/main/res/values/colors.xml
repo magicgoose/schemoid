@@ -6,8 +6,9 @@
     <color name="editor_button_pressed">#53a64d</color>
     <color name="editor_button_border">#616161</color>
 
-    <color name="log_background_input">#c2dce1</color>
-    <color name="log_background_output">#d6e1c0</color>
-    <color name="log_background_error_output">#d8a5a4</color>
+    <color name="log_background_input">#dae8eb</color>
+    <color name="log_background_output">#ced4c5</color>
+    <color name="log_background_error_output">#ffb3b6</color>
+    <color name="log_background_info_output">#cec6cf</color>
     <color name="log_background">#dedede</color>
 </resources>

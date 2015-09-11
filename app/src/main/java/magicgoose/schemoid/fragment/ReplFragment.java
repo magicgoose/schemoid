@@ -1,5 +1,6 @@
 package magicgoose.schemoid.fragment;
 
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -9,6 +10,9 @@ import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
@@ -35,6 +39,39 @@ public class ReplFragment extends Fragment {
     public void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
+        setHasOptionsMenu(true);
+    }
+
+    @Override
+    public void onCreateOptionsMenu(final Menu menu, final MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        inflater.inflate(R.menu.menu_repl, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(final MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.abort:
+                abortEval();
+                return true;
+            case R.id.reset:
+                resetEval();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    private void resetEval() {
+        if (schemeRunner != null) {
+            schemeRunner.reset();
+        }
+    }
+
+    private void abortEval() {
+        if (schemeRunner != null) {
+            schemeRunner.abort();
+        }
     }
 
     @Nullable
@@ -153,6 +190,16 @@ public class ReplFragment extends Fragment {
             final TextView view = (TextView) this.itemView;
             view.setText(logItem.content);
             view.setBackgroundResource(getLogItemColorResId(logItem.kind));
+            view.setTypeface(Typeface.create(view.getTypeface(), getLogItemTextStyle(logItem.kind)));
+        }
+
+        private int getLogItemTextStyle(final SchemeLogItemKind kind) {
+            switch (kind) {
+                case SystemInfo:
+                    return Typeface.ITALIC;
+                default:
+                    return Typeface.NORMAL;
+            }
         }
 
         private int getLogItemColorResId(final SchemeLogItemKind kind) {
@@ -163,6 +210,8 @@ public class ReplFragment extends Fragment {
                     return R.color.log_background_output;
                 case ErrorOutput:
                     return R.color.log_background_error_output;
+                case SystemInfo:
+                    return R.color.log_background_info_output;
             }
             throw new IllegalArgumentException();
         }

@@ -19,8 +19,8 @@ android {
         applicationId "magicgoose.schemoid"
         minSdkVersion 10
         targetSdkVersion 23
-        versionCode 4
-        versionName "1.03"
+        versionCode 5
+        versionName "1.04"
     }
     buildTypes {
         release {

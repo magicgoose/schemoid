@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Monospaced">
+        <item name="android:fontFamily">monospace</item>
+    </style>
+</resources>

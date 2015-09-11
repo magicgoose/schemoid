@@ -19,14 +19,15 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import magicgoose.schemoid.R;
 import magicgoose.schemoid.TheApp;
 import magicgoose.schemoid.scheme.ISchemeRunner;
 import magicgoose.schemoid.scheme.SchemeLogItem;
 import magicgoose.schemoid.scheme.SchemeLogItemKind;
+import magicgoose.schemoid.util.ReactiveList;
 import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
 
 public class ReplFragment extends Fragment {
 
@@ -34,6 +35,8 @@ public class ReplFragment extends Fragment {
     private ISchemeRunner schemeRunner;
     private Subscription schemeOutputSubscription;
     private LogAdapter logAdapter;
+    private RecyclerView logView;
+    private ReactiveList<SchemeLogItem> log;
 
     @Override
     public void onCreate(final Bundle savedInstanceState) {
@@ -56,6 +59,9 @@ public class ReplFragment extends Fragment {
                 return true;
             case R.id.reset:
                 resetEval();
+                return true;
+            case R.id.clear_log:
+                log.clear();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -96,20 +102,31 @@ public class ReplFragment extends Fragment {
         view.findViewById(R.id.eb_left_paren).setOnClickListener(this::parenClick);
         view.findViewById(R.id.eb_right_paren).setOnClickListener(this::parenClick);
 
-        final RecyclerView logView = ((RecyclerView) view.findViewById(R.id.code_output));
-        logAdapter = new LogAdapter(logView);
+        logView = ((RecyclerView) view.findViewById(R.id.code_output));
+        logAdapter = new LogAdapter();
         logView.setLayoutManager(new LinearLayoutManager(ctx, LinearLayoutManager.VERTICAL, false));
         logView.setAdapter(logAdapter);
 
         schemeRunner = TheApp.getInstance().getSchemeRunner();
-        schemeOutputSubscription = schemeRunner.getOutputs().
-                observeOn(AndroidSchedulers.mainThread())
-                .subscribe(this::onSchemeOutput);
+        log = schemeRunner.getLog();
+        schemeOutputSubscription = bindAdapterToList(logAdapter, log);
     }
 
-
-    private void onSchemeOutput(SchemeLogItem output) {
-        logAdapter.appendItem(output);
+    private Subscription bindAdapterToList(final LogAdapter logAdapter, final ReactiveList<SchemeLogItem> log) {
+        logAdapter.reset(log);
+        return log.getChanges().subscribe(listChange -> {
+            switch (listChange.listChangeKind) {
+                case Delete:
+                    logAdapter.notifyItemRangeRemoved(listChange.rangeStart, listChange.count);
+                    break;
+                case Insert:
+                    logAdapter.notifyItemRangeInserted(listChange.rangeStart, listChange.count);
+                    logView.scrollToPosition(listChange.rangeStart + listChange.count - 1);
+                    break;
+                default:
+                    throw new UnsupportedOperationException();
+            }
+        });
     }
 
     private void parenClick(final View view) {
@@ -125,6 +142,8 @@ public class ReplFragment extends Fragment {
         schemeOutputSubscription.unsubscribe();
         schemeOutputSubscription = null;
         logAdapter = null;
+        logView = null;
+        log = null;
     }
 
     private void arrowClick(final View view) {
@@ -149,19 +168,7 @@ public class ReplFragment extends Fragment {
 
     private static class LogAdapter extends RecyclerView.Adapter<LogItemVH> {
 
-        private final ArrayList<SchemeLogItem> items = new ArrayList<>();
-        private final RecyclerView logView;
-
-        public LogAdapter(final RecyclerView logView) {
-            this.logView = logView;
-        }
-
-        public void appendItem(SchemeLogItem item) {
-            final int prevSize = items.size();
-            items.add(item);
-            notifyItemInserted(prevSize);
-            logView.scrollToPosition(prevSize);
-        }
+        private List<SchemeLogItem> items = new ArrayList<>();
 
         @Override
         public LogItemVH onCreateViewHolder(final ViewGroup parent, final int viewType) {
@@ -177,6 +184,11 @@ public class ReplFragment extends Fragment {
         @Override
         public int getItemCount() {
             return items.size();
+        }
+
+        public void reset(final List<SchemeLogItem> items) {
+            this.items = items;
+            notifyDataSetChanged();
         }
     }
 

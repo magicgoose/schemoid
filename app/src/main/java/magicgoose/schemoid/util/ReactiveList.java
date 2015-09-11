@@ -65,8 +65,9 @@ public class ReactiveList<T> implements List<T> {
 
     @Override
     public void clear() {
-        throw new UnsupportedOperationException();
-//        items.clear();
+        final int size = items.size();
+        items.clear();
+        notifyDelete(0, size);
     }
 
     @Override

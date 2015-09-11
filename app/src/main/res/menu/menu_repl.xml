@@ -4,5 +4,7 @@
           android:id="@+id/abort"/>
     <item android:title="@string/reset"
           android:id="@+id/reset"/>
+    <item android:title="@string/clear_log"
+          android:id="@+id/clear_log"/>
 
 </menu>

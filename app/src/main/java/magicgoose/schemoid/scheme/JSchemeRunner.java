@@ -2,6 +2,7 @@ package magicgoose.schemoid.scheme;
 
 import android.annotation.SuppressLint;
 import android.content.res.Resources;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
 
@@ -16,13 +17,13 @@ import java.util.concurrent.Future;
 import jscheme.JScheme;
 import jsint.Evaluator;
 import jsint.U;
-import rx.Observable;
-import rx.subjects.ReplaySubject;
+import magicgoose.schemoid.util.ReactiveList;
 
 public class JSchemeRunner implements ISchemeRunner {
 
-    private final ReplaySubject<SchemeLogItem> outputsSubject = ReplaySubject.create();
+    private final ReactiveList<SchemeLogItem> log = new ReactiveList<>();
     private final Resources resources;
+    private final Handler handler;
 
     private JScheme jsc = createJScheme();
 
@@ -36,8 +37,9 @@ public class JSchemeRunner implements ISchemeRunner {
     private final ExecutorService es = Executors.newSingleThreadExecutor();
     private ArrayList<Future<?>> tasks = new ArrayList<>();
 
-    public JSchemeRunner(Resources resources) {
+    public JSchemeRunner(Resources resources, Handler handler) {
         this.resources = resources;
+        this.handler = handler;
         submitInitTask();
         logSysInfo("Welcome to Schemoid\nYour commands and evaluation results will appear here");
     }
@@ -77,13 +79,13 @@ public class JSchemeRunner implements ISchemeRunner {
     }
 
     @Override
-    public Observable<SchemeLogItem> getOutputs() {
-        return outputsSubject;
+    public ReactiveList<SchemeLogItem> getLog() {
+        return log;
     }
 
     @Override
     public void pushInput(final String input) {
-        outputsSubject.onNext(new SchemeLogItem(SchemeLogItemKind.Input, formatInput(input)));
+        appendToLog(new SchemeLogItem(SchemeLogItemKind.Input, formatInput(input)));
         submitTask(() -> doProcessString(input));
     }
 
@@ -98,7 +100,7 @@ public class JSchemeRunner implements ISchemeRunner {
 
     private void doProcessString(final String input) {
         final SchemeLogItem result = doEvalString(input);
-        outputsSubject.onNext(result);
+        appendToLog(result);
     }
 
     private SchemeLogItem doEvalString(final String input) {
@@ -137,7 +139,12 @@ public class JSchemeRunner implements ISchemeRunner {
     }
 
     private void logSysInfo(final String message) {
-        outputsSubject.onNext(new SchemeLogItem(SchemeLogItemKind.SystemInfo, message));
+        final SchemeLogItem logItem = new SchemeLogItem(SchemeLogItemKind.SystemInfo, message);
+        appendToLog(logItem);
+    }
+
+    private void appendToLog(final SchemeLogItem logItem) {
+        handler.post(() -> log.add(logItem));
     }
 
     private boolean doAbort() {

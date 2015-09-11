@@ -3,7 +3,7 @@
     <dimen name="activity_horizontal_margin">16dp</dimen>
     <dimen name="activity_vertical_margin">16dp</dimen>
 
-    <dimen name="editor_button_size">50dp</dimen>
-    <dimen name="editor_button_border_size_half">1dp</dimen>
+    <dimen name="editor_button_size">40dp</dimen>
+    <dimen name="editor_button_border_size">2dp</dimen>
     <dimen name="code_log_item_padding">8dp</dimen>
 </resources>

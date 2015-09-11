@@ -6,6 +6,8 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,7 +30,6 @@ public class ReplFragment extends Fragment {
     private ISchemeRunner schemeRunner;
     private Subscription schemeOutputSubscription;
     private LogAdapter logAdapter;
-    private View editorButtons;
 
     @Override
     public void onCreate(final Bundle savedInstanceState) {
@@ -47,10 +48,8 @@ public class ReplFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         final FragmentActivity ctx = getActivity();
 
-        editorButtons = view.findViewById(R.id.editor_buttons);
         codeEditText = (EditText) view.findViewById(R.id.code_input);
-        codeEditText.setOnFocusChangeListener(this::handleCodeEditTextFocusChange);
-        handleCodeEditTextFocusChange(codeEditText, codeEditText.hasFocus());
+        codeEditText.addTextChangedListener(new CodeEditTextWatcher());
 
         view.findViewById(R.id.eb_eval).setOnClickListener(this::evalClick);
 
@@ -71,9 +70,6 @@ public class ReplFragment extends Fragment {
                 .subscribe(this::onSchemeOutput);
     }
 
-    private void handleCodeEditTextFocusChange(final View view, final boolean hasFocus) {
-        editorButtons.setVisibility(hasFocus ? View.VISIBLE : View.GONE);
-    }
 
     private void onSchemeOutput(SchemeLogItem output) {
         logAdapter.appendItem(output);
@@ -92,7 +88,6 @@ public class ReplFragment extends Fragment {
         schemeOutputSubscription.unsubscribe();
         schemeOutputSubscription = null;
         logAdapter = null;
-        editorButtons = null;
     }
 
     private void arrowClick(final View view) {
@@ -170,6 +165,20 @@ public class ReplFragment extends Fragment {
                     return R.color.log_background_error_output;
             }
             throw new IllegalArgumentException();
+        }
+    }
+
+    private class CodeEditTextWatcher implements TextWatcher {
+        @Override
+        public void beforeTextChanged(final CharSequence s, final int start, final int count, final int after) {
+        }
+
+        @Override
+        public void onTextChanged(final CharSequence s, final int start, final int before, final int count) {
+        }
+
+        @Override
+        public void afterTextChanged(final Editable s) {
         }
     }
 }

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<View xmlns:android="http://schemas.android.com/apk/res/android"
+      android:orientation="vertical"
+      android:layout_width="@dimen/editor_button_border_size"
+      android:layout_height="match_parent"
+      android:background="@color/editor_button_border"
+    />

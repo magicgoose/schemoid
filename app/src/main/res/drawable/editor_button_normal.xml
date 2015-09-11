@@ -2,7 +2,4 @@
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
        android:shape="rectangle">
     <solid android:color="@color/editor_button_normal"/>
-    <stroke
-        android:color="@color/editor_button_border"
-        android:width="@dimen/editor_button_border_size_half"/>
 </shape>

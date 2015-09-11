@@ -1,39 +1,30 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             xmlns:tools="http://schemas.android.com/tools"
-             android:layout_height="match_parent"
-             android:layout_width="match_parent">
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
-    <LinearLayout
+    <android.support.v7.widget.RecyclerView
+        style="@style/ExecutionLog"
+        android:id="@+id/code_output"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        tools:context=".MainActivity">
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="@color/log_background"
+        />
 
-        <android.support.v7.widget.RecyclerView
-            style="@style/ExecutionLog"
-            android:id="@+id/code_output"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:background="@color/log_background"
-            />
+    <include layout="@layout/divider_horizontal_thick"/>
 
-        <include layout="@layout/divider_horizontal_thick"/>
-
-        <EditText
-            style="@style/CodeInput"
-            android:id="@+id/code_input"
-            />
-
-    </LinearLayout>
+    <EditText
+        style="@style/CodeInput"
+        android:id="@+id/code_input"
+        />
 
     <include
         layout="@layout/editor_buttons"
         android:id="@+id/editor_buttons"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|right"
         />
 
-</FrameLayout>
+</LinearLayout>
 

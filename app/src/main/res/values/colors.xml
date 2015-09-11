@@ -3,6 +3,7 @@
     <color name="divider_color">#c4c4c4</color>
 
     <color name="editor_button_normal">#e0e0e0</color>
+    <color name="editor_button_pressed">#53a64d</color>
     <color name="editor_button_border">#616161</color>
 
     <color name="log_background_input">#c2dce1</color>

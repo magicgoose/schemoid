@@ -32,7 +32,7 @@ import rx.Subscription;
 public class ReplFragment extends Fragment {
 
     private EditText codeEditText;
-    private ISchemeRunner schemeRunner;
+    private ISchemeRunner<SchemeLogItem> schemeRunner;
     private Subscription schemeOutputSubscription;
     private LogAdapter logAdapter;
     private RecyclerView logView;

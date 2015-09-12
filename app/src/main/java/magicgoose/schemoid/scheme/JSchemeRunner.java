@@ -18,12 +18,14 @@ import jscheme.JScheme;
 import jsint.Evaluator;
 import jsint.U;
 import magicgoose.schemoid.util.ReactiveList;
+import rx.functions.Func1;
 
-public class JSchemeRunner implements ISchemeRunner {
+public class JSchemeRunner<TLogItem> implements ISchemeRunner<TLogItem> {
 
-    private final ReactiveList<SchemeLogItem> log = new ReactiveList<>();
+    private final ReactiveList<TLogItem> log = new ReactiveList<>();
     private final Resources resources;
     private final Handler handler;
+    private final Func1<SchemeLogItem, TLogItem> logTransform;
 
     private JScheme jsc = createJScheme();
 
@@ -37,9 +39,10 @@ public class JSchemeRunner implements ISchemeRunner {
     private final ExecutorService es = Executors.newSingleThreadExecutor();
     private ArrayList<Future<?>> tasks = new ArrayList<>();
 
-    public JSchemeRunner(Resources resources, Handler handler) {
+    public JSchemeRunner(Resources resources, Handler handler, Func1<SchemeLogItem, TLogItem> logTransform) {
         this.resources = resources;
         this.handler = handler;
+        this.logTransform = logTransform;
         submitInitTask();
         logSysInfo("Welcome to Schemoid\nYour commands and evaluation results will appear here");
     }
@@ -79,7 +82,7 @@ public class JSchemeRunner implements ISchemeRunner {
     }
 
     @Override
-    public ReactiveList<SchemeLogItem> getLog() {
+    public ReactiveList<TLogItem> getLog() {
         return log;
     }
 
@@ -144,7 +147,11 @@ public class JSchemeRunner implements ISchemeRunner {
     }
 
     private void appendToLog(final SchemeLogItem logItem) {
-        handler.post(() -> log.add(logItem));
+        handler.post(() -> log.add(transform(logItem)));
+    }
+
+    private TLogItem transform(final SchemeLogItem logItem) {
+        return logTransform.call(logItem);
     }
 
     private boolean doAbort() {

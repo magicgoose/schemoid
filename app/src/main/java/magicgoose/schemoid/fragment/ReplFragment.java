@@ -32,11 +32,11 @@ import rx.Subscription;
 public class ReplFragment extends Fragment {
 
     private EditText codeEditText;
-    private ISchemeRunner<SchemeLogItem> schemeRunner;
+    private ISchemeRunner<SelectableSchemeLogItem> schemeRunner;
     private Subscription schemeOutputSubscription;
     private LogAdapter logAdapter;
     private RecyclerView logView;
-    private ReactiveList<SchemeLogItem> log;
+    private ReactiveList<SelectableSchemeLogItem> log;
 
     @Override
     public void onCreate(final Bundle savedInstanceState) {
@@ -112,7 +112,7 @@ public class ReplFragment extends Fragment {
         schemeOutputSubscription = bindAdapterToList(logAdapter, log);
     }
 
-    private Subscription bindAdapterToList(final LogAdapter logAdapter, final ReactiveList<SchemeLogItem> log) {
+    private Subscription bindAdapterToList(final LogAdapter logAdapter, final ReactiveList<SelectableSchemeLogItem> log) {
         logAdapter.reset(log);
         return log.getChanges().subscribe(listChange -> {
             switch (listChange.listChangeKind) {
@@ -168,7 +168,7 @@ public class ReplFragment extends Fragment {
 
     private static class LogAdapter extends RecyclerView.Adapter<LogItemVH> {
 
-        private List<SchemeLogItem> items = new ArrayList<>();
+        private List<SelectableSchemeLogItem> items = new ArrayList<>();
 
         @Override
         public LogItemVH onCreateViewHolder(final ViewGroup parent, final int viewType) {
@@ -186,7 +186,7 @@ public class ReplFragment extends Fragment {
             return items.size();
         }
 
-        public void reset(final List<SchemeLogItem> items) {
+        public void reset(final List<SelectableSchemeLogItem> items) {
             this.items = items;
             notifyDataSetChanged();
         }
@@ -198,7 +198,7 @@ public class ReplFragment extends Fragment {
             super(itemView);
         }
 
-        public void updateFor(final SchemeLogItem logItem) {
+        public void updateFor(final SelectableSchemeLogItem logItem) {
             final TextView view = (TextView) this.itemView;
             view.setText(logItem.content);
             view.setBackgroundResource(getLogItemColorResId(logItem.kind));

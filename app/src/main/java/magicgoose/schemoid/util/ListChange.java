@@ -11,15 +11,15 @@ public class ListChange {
         this.count = count;
     }
 
-    public static ListChange insert(int start) {return insert(start, 1);}
-
     public static ListChange insert(int start, int size) {
         return new ListChange(ListChangeKind.Insert, start, size);
     }
 
-    public static ListChange delete(int start) {return delete(start, 1);}
-
     public static ListChange delete(int start, int size) {
         return new ListChange(ListChangeKind.Delete, start, size);
+    }
+
+    public static ListChange update(int start, int size) {
+        return new ListChange(ListChangeKind.Update, start, size);
     }
 }

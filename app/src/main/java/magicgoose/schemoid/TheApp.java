@@ -7,6 +7,7 @@ import android.support.annotation.NonNull;
 
 import java.io.IOException;
 
+import magicgoose.schemoid.fragment.SelectableSchemeLogItem;
 import magicgoose.schemoid.scheme.ISchemeRunner;
 import magicgoose.schemoid.scheme.JSchemeRunner;
 import magicgoose.schemoid.scheme.SchemeLogItem;
@@ -14,14 +15,14 @@ import magicgoose.schemoid.scheme.SchemeLogItem;
 public class TheApp extends Application {
 
     private static TheApp Instance;
-    private ISchemeRunner<SchemeLogItem> schemeRunner;
+    private ISchemeRunner<SelectableSchemeLogItem> schemeRunner;
     private final Handler handler = new Handler(Looper.getMainLooper());
 
     public static TheApp getInstance() {
         return Instance;
     }
 
-    public ISchemeRunner<SchemeLogItem> getSchemeRunner() {
+    public ISchemeRunner<SelectableSchemeLogItem> getSchemeRunner() {
         if (schemeRunner == null) {
             schemeRunner = createSchemeRunner();
         }
@@ -29,8 +30,8 @@ public class TheApp extends Application {
     }
 
     @NonNull
-    private ISchemeRunner<SchemeLogItem> createSchemeRunner() {
-        return new JSchemeRunner<>(getResources(), this.handler, x -> x);
+    private ISchemeRunner<SelectableSchemeLogItem> createSchemeRunner() {
+        return new JSchemeRunner<>(getResources(), this.handler, x -> new SelectableSchemeLogItem(x.kind, x.content));
     }
 
     @Override

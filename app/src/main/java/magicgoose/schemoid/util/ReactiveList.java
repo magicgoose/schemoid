@@ -21,12 +21,20 @@ public class ReactiveList<T> implements List<T> {
         return changes;
     }
 
-    private void notifyDelete(int start, int size) {
+    public void touch(final int start, final int size) {
+        notifyUpdate(start, size);
+    }
+
+    private void notifyDelete(final int start, final int size) {
         changes.onNext(ListChange.delete(start, size));
     }
 
-    private void notifyInsert(int start, int size) {
+    private void notifyInsert(final int start, final int size) {
         changes.onNext(ListChange.insert(start, size));
+    }
+
+    private void notifyUpdate(final int start, final int size) {
+        changes.onNext(ListChange.update(start, size));
     }
 
     @Override
@@ -103,8 +111,9 @@ public class ReactiveList<T> implements List<T> {
 
     @Override
     public T set(final int index, final T object) {
-        throw new UnsupportedOperationException();
-//        return items.set(index, object);
+        final T previous = items.set(index, object);
+        notifyUpdate(index, 1);
+        return previous;
     }
 
     @NonNull

@@ -11,4 +11,7 @@
     <color name="log_background_error_output">#ffb3b6</color>
     <color name="log_background_info_output">#cec6cf</color>
     <color name="log_background">#dedede</color>
+    <color name="selection_border">#001cc6</color>
+    <color name="selection_highlight">#c0ffffff</color>
+    <color name="pressed_highlight">#4a207800</color>
 </resources>

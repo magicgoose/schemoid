@@ -13,6 +13,7 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
@@ -24,7 +25,6 @@ import java.util.List;
 import magicgoose.schemoid.R;
 import magicgoose.schemoid.TheApp;
 import magicgoose.schemoid.scheme.ISchemeRunner;
-import magicgoose.schemoid.scheme.SchemeLogItem;
 import magicgoose.schemoid.scheme.SchemeLogItemKind;
 import magicgoose.schemoid.util.ReactiveList;
 import rx.Subscription;
@@ -37,6 +37,7 @@ public class ReplFragment extends Fragment {
     private LogAdapter logAdapter;
     private RecyclerView logView;
     private ReactiveList<SelectableSchemeLogItem> log;
+    private int selectedCount;
 
     @Override
     public void onCreate(final Bundle savedInstanceState) {
@@ -103,13 +104,24 @@ public class ReplFragment extends Fragment {
         view.findViewById(R.id.eb_right_paren).setOnClickListener(this::parenClick);
 
         logView = ((RecyclerView) view.findViewById(R.id.code_output));
-        logAdapter = new LogAdapter();
+        logAdapter = new LogAdapter(logView);
         logView.setLayoutManager(new LinearLayoutManager(ctx, LinearLayoutManager.VERTICAL, false));
         logView.setAdapter(logAdapter);
 
         schemeRunner = TheApp.getInstance().getSchemeRunner();
         log = schemeRunner.getLog();
         schemeOutputSubscription = bindAdapterToList(logAdapter, log);
+        selectedCount = getSelectedCount(log);
+    }
+
+    private int getSelectedCount(final ReactiveList<SelectableSchemeLogItem> log) {
+        int count = 0;
+        for (final SelectableSchemeLogItem selectableSchemeLogItem : log) {
+            if (selectableSchemeLogItem.isSelected) {
+                ++count;
+            }
+        }
+        return count;
     }
 
     private Subscription bindAdapterToList(final LogAdapter logAdapter, final ReactiveList<SelectableSchemeLogItem> log) {
@@ -166,14 +178,22 @@ public class ReplFragment extends Fragment {
         this.schemeRunner.pushInput(text);
     }
 
-    private static class LogAdapter extends RecyclerView.Adapter<LogItemVH> {
+    private class LogAdapter extends RecyclerView.Adapter<LogItemVH> implements View.OnClickListener {
 
+        private final RecyclerView logView;
         private List<SelectableSchemeLogItem> items = new ArrayList<>();
+
+        public LogAdapter(final RecyclerView logView) {
+            this.logView = logView;
+        }
 
         @Override
         public LogItemVH onCreateViewHolder(final ViewGroup parent, final int viewType) {
-            final TextView view = (TextView) LayoutInflater.from(parent.getContext()).inflate(R.layout.log_item, parent, false);
-            return new LogItemVH(view);
+            final View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.log_item, parent, false);
+            itemView.setOnClickListener(this);
+            final TextView textView = (TextView) itemView.findViewById(R.id.text);
+            final View overlayView = itemView.findViewById(R.id.overlay);
+            return new LogItemVH(itemView, textView, overlayView);
         }
 
         @Override
@@ -190,19 +210,38 @@ public class ReplFragment extends Fragment {
             this.items = items;
             notifyDataSetChanged();
         }
+
+        @Override
+        public void onClick(final View v) {
+            final RecyclerView.LayoutManager layoutManager = logView.getLayoutManager();
+            final int position = layoutManager.getPosition(v);
+            final SelectableSchemeLogItem item = items.get(position);
+            item.isSelected ^= true;
+            selectedCount += (item.isSelected ? 1 : -1);
+            notifyItemChanged(position);
+        }
     }
 
     private static class LogItemVH extends RecyclerView.ViewHolder {
 
-        public LogItemVH(final View itemView) {
+        private final TextView textView;
+        private final View overlayView;
+
+        public LogItemVH(final View itemView, final TextView textView, final View overlayView) {
             super(itemView);
+            this.textView = textView;
+            this.overlayView = overlayView;
         }
 
         public void updateFor(final SelectableSchemeLogItem logItem) {
-            final TextView view = (TextView) this.itemView;
-            view.setText(logItem.content);
-            view.setBackgroundResource(getLogItemColorResId(logItem.kind));
-            view.setTypeface(Typeface.create(view.getTypeface(), getLogItemTextStyle(logItem.kind)));
+            itemView.setBackgroundResource(getLogItemColorResId(logItem.kind));
+            textView.setText(logItem.content);
+            textView.setTypeface(Typeface.create(textView.getTypeface(), getLogItemTextStyle(logItem.kind)));
+            if (logItem.isSelected) {
+                overlayView.setBackgroundResource(R.drawable.log_item_overlay_selected);
+            } else {
+                overlayView.setBackgroundColor(android.R.color.transparent);
+            }
         }
 
         private int getLogItemTextStyle(final SchemeLogItemKind kind) {

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <bitmap android:src="@drawable/selection_fill_2" android:tileMode="repeat"/>
+    </item>
+    <item
+        android:top="@dimen/log_selection_border_negative"
+        android:bottom="@dimen/log_selection_border_negative">
+        <shape>
+            <solid android:color="@android:color/transparent"/>
+            <stroke
+                android:color="@color/selection_border"
+                android:width="@dimen/log_selection_border"/>
+        </shape>
+    </item>
+</layer-list>

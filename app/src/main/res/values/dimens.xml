@@ -6,4 +6,6 @@
     <dimen name="editor_button_size">40dp</dimen>
     <dimen name="editor_button_border_size">2dp</dimen>
     <dimen name="code_log_item_padding">8dp</dimen>
+    <dimen name="log_selection_border_negative">-5dp</dimen>
+    <dimen name="log_selection_border">5dp</dimen>
 </resources>

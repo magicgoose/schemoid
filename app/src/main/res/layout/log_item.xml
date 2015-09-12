@@ -1,13 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
-<TextView xmlns:android="http://schemas.android.com/apk/res/android"
-          style="@style/Monospaced"
-          android:layout_width="match_parent"
-          android:layout_height="wrap_content"
-          android:textColor="#000"
-          android:textSize="14sp"
-          android:padding="@dimen/code_log_item_padding"
-          android:focusable="true"
-          android:focusableInTouchMode="true"
-          android:clickable="true"
-          android:textIsSelectable="true"
-    />
+<magicgoose.schemoid.view.ClickableFrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                                               android:id="@+id/container"
+                                               android:layout_width="match_parent"
+                                               android:layout_height="wrap_content"
+                                               android:clickable="true"
+    >
+
+    <TextView xmlns:android="http://schemas.android.com/apk/res/android"
+              style="@style/Monospaced"
+              android:id="@+id/text"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:textColor="#000"
+              android:textSize="14sp"
+              android:padding="@dimen/code_log_item_padding"
+              android:clickable="false"
+              android:longClickable="false"
+              android:background="@drawable/pressed_indicator"
+        />
+
+    <View
+        android:id="@+id/overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clickable="false"
+        android:longClickable="false"
+        android:background="@drawable/log_item_overlay_selected"
+        />
+</magicgoose.schemoid.view.ClickableFrameLayout>
+

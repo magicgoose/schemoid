@@ -1,11 +1,13 @@
 package magicgoose.schemoid;
 
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import magicgoose.schemoid.fragment.BackKeyHandler;
 import magicgoose.schemoid.fragment.ReplFragment;
 
 public class MainActivity extends AppCompatActivity {
@@ -28,6 +30,21 @@ public class MainActivity extends AppCompatActivity {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
+    }
+
+    @Override
+    public void onBackPressed() {
+        final FragmentManager fm = getSupportFragmentManager();
+        for (final Fragment fragment : fm.getFragments()) {
+            if (fragment instanceof BackKeyHandler) {
+                final boolean handled = ((BackKeyHandler) fragment).handleBackKey();
+                if (handled) {
+                    return;
+                }
+            }
+        }
+
+        super.onBackPressed();
     }
 
     @Override

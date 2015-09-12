@@ -1,5 +1,6 @@
 package magicgoose.schemoid.fragment;
 
+import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -13,7 +14,6 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
@@ -29,7 +29,7 @@ import magicgoose.schemoid.scheme.SchemeLogItemKind;
 import magicgoose.schemoid.util.ReactiveList;
 import rx.Subscription;
 
-public class ReplFragment extends Fragment {
+public class ReplFragment extends Fragment implements BackKeyHandler {
 
     private EditText codeEditText;
     private ISchemeRunner<SelectableSchemeLogItem> schemeRunner;
@@ -135,6 +135,9 @@ public class ReplFragment extends Fragment {
                     logAdapter.notifyItemRangeInserted(listChange.rangeStart, listChange.count);
                     logView.scrollToPosition(listChange.rangeStart + listChange.count - 1);
                     break;
+                case Update:
+                    logAdapter.notifyItemRangeChanged(listChange.rangeStart, listChange.count);
+                    break;
                 default:
                     throw new UnsupportedOperationException();
             }
@@ -176,6 +179,26 @@ public class ReplFragment extends Fragment {
             return;
         this.codeEditText.getText().clear();
         this.schemeRunner.pushInput(text);
+    }
+
+    @Override
+    public boolean handleBackKey() {
+        if (selectedCount > 0) {
+            deselectAllLogItems();
+            return true;
+        }
+        return false;
+    }
+
+    private void deselectAllLogItems() {
+        for (int i = 0; i < log.size(); i++) {
+            final SelectableSchemeLogItem item = log.get(i);
+            if (item.isSelected) {
+                item.isSelected = false;
+                log.touch(i, 1);
+            }
+        }
+        selectedCount = 0;
     }
 
     private class LogAdapter extends RecyclerView.Adapter<LogItemVH> implements View.OnClickListener {
@@ -240,7 +263,7 @@ public class ReplFragment extends Fragment {
             if (logItem.isSelected) {
                 overlayView.setBackgroundResource(R.drawable.log_item_overlay_selected);
             } else {
-                overlayView.setBackgroundColor(android.R.color.transparent);
+                overlayView.setBackgroundColor(Color.TRANSPARENT);
             }
         }
 

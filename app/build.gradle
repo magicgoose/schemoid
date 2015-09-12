@@ -19,8 +19,8 @@ android {
         applicationId "magicgoose.schemoid"
         minSdkVersion 10
         targetSdkVersion 23
-        versionCode 5
-        versionName "1.04"
+        versionCode 6
+        versionName "1.05"
     }
     buildTypes {
         release {
@@ -63,5 +63,7 @@ dependencies {
 
     compile 'io.reactivex:rxandroid:+'
     compile 'io.reactivex:rxjava:+'
-
+//
+//    compile 'com.mikepenz:iconics-core:1.7.6@aar'
+//    compile 'com.mikepenz:fontawesome-typeface:4.4.0.1@aar'
 }

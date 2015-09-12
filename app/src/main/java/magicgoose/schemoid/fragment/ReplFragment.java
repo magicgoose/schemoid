@@ -1,11 +1,13 @@
 package magicgoose.schemoid.fragment;
 
+import android.annotation.SuppressLint;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
@@ -26,6 +28,7 @@ import magicgoose.schemoid.R;
 import magicgoose.schemoid.TheApp;
 import magicgoose.schemoid.scheme.ISchemeRunner;
 import magicgoose.schemoid.scheme.SchemeLogItemKind;
+import magicgoose.schemoid.util.ClipboardUtil;
 import magicgoose.schemoid.util.ReactiveList;
 import rx.Subscription;
 
@@ -49,7 +52,7 @@ public class ReplFragment extends Fragment implements BackKeyHandler {
     @Override
     public void onCreateOptionsMenu(final Menu menu, final MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
-        inflater.inflate(R.menu.menu_repl, menu);
+        inflater.inflate(selectedCount > 0 ? R.menu.menu_repl_selection : R.menu.menu_repl, menu);
     }
 
     @Override
@@ -64,9 +67,37 @@ public class ReplFragment extends Fragment implements BackKeyHandler {
             case R.id.clear_log:
                 log.clear();
                 return true;
+            case R.id.copy:
+                copySelectedLogItems();
+                return true;
+            case R.id.delete:
+                deleteSelectedLogItems();
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    private void copySelectedLogItems() {
+        final StringBuilder sb = new StringBuilder();
+        for (final SelectableSchemeLogItem selectableSchemeLogItem : log) {
+            if (selectableSchemeLogItem.isSelected) {
+                sb.append(selectableSchemeLogItem.formattedContent);
+                sb.append('\n');
+            }
+        }
+        ClipboardUtil.copyToClipboard(getActivity(), "Code", sb.toString());
+    }
+
+    private void deleteSelectedLogItems() {
+        for (int i = 0; i < log.size(); i++) {
+            if (log.get(i).isSelected) {
+                log.remove(i);
+                --i;
+            }
+        }
+        selectedCount = 0;
+        invalidateSelectedCount();
     }
 
     private void resetEval() {
@@ -199,6 +230,14 @@ public class ReplFragment extends Fragment implements BackKeyHandler {
             }
         }
         selectedCount = 0;
+        invalidateSelectedCount();
+    }
+
+    @SuppressLint("NewApi")
+    private void invalidateSelectedCount() {
+        final boolean isInSelectionMode = selectedCount > 0;
+        final FragmentActivity activity = getActivity();
+        activity.invalidateOptionsMenu();
     }
 
     private class LogAdapter extends RecyclerView.Adapter<LogItemVH> implements View.OnClickListener {
@@ -241,6 +280,9 @@ public class ReplFragment extends Fragment implements BackKeyHandler {
             final SelectableSchemeLogItem item = items.get(position);
             item.isSelected ^= true;
             selectedCount += (item.isSelected ? 1 : -1);
+            if (selectedCount == 0 || (selectedCount == 1 && item.isSelected)) {
+                invalidateSelectedCount();
+            }
             notifyItemChanged(position);
         }
     }
@@ -258,7 +300,7 @@ public class ReplFragment extends Fragment implements BackKeyHandler {
 
         public void updateFor(final SelectableSchemeLogItem logItem) {
             itemView.setBackgroundResource(getLogItemColorResId(logItem.kind));
-            textView.setText(logItem.content);
+            textView.setText(logItem.displayContent);
             textView.setTypeface(Typeface.create(textView.getTypeface(), getLogItemTextStyle(logItem.kind)));
             if (logItem.isSelected) {
                 overlayView.setBackgroundResource(R.drawable.log_item_overlay_selected);

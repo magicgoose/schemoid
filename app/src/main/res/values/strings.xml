@@ -6,4 +6,5 @@
     <string name="abort">Abort evaluation</string>
     <string name="reset">Reset the interpreter</string>
     <string name="clear_log">Clear log</string>
+    <string name="delete">Delete</string>
 </resources>

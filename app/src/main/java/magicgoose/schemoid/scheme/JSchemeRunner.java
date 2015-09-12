@@ -88,7 +88,7 @@ public class JSchemeRunner<TLogItem> implements ISchemeRunner<TLogItem> {
 
     @Override
     public void pushInput(final String input) {
-        appendToLog(new SchemeLogItem(SchemeLogItemKind.Input, formatInput(input)));
+        appendToLog(new SchemeLogItem(SchemeLogItemKind.Input, formatInput(input), input));
         submitTask(() -> doProcessString(input));
     }
 
@@ -128,11 +128,11 @@ public class JSchemeRunner<TLogItem> implements ISchemeRunner<TLogItem> {
     }
 
     private SchemeLogItem errorLogItem(final String text) {
-        return new SchemeLogItem(SchemeLogItemKind.ErrorOutput, text);
+        return new SchemeLogItem(SchemeLogItemKind.ErrorOutput, text, text);
     }
 
     private SchemeLogItem outputLogItem(final String text) {
-        return new SchemeLogItem(SchemeLogItemKind.Output, text);
+        return new SchemeLogItem(SchemeLogItemKind.Output, text, text);
     }
 
     @Override
@@ -142,7 +142,7 @@ public class JSchemeRunner<TLogItem> implements ISchemeRunner<TLogItem> {
     }
 
     private void logSysInfo(final String message) {
-        final SchemeLogItem logItem = new SchemeLogItem(SchemeLogItemKind.SystemInfo, message);
+        final SchemeLogItem logItem = new SchemeLogItem(SchemeLogItemKind.SystemInfo, message, message);
         appendToLog(logItem);
     }
 

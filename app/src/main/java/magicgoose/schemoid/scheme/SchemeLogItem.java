@@ -2,10 +2,12 @@ package magicgoose.schemoid.scheme;
 
 public class SchemeLogItem {
     public final SchemeLogItemKind kind;
-    public final String content;
+    public final String displayContent;
+    public final String formattedContent;
 
-    public SchemeLogItem(final SchemeLogItemKind kind, final String content) {
+    public SchemeLogItem(final SchemeLogItemKind kind, final String displayContent, final String formattedContent) {
         this.kind = kind;
-        this.content = content;
+        this.displayContent = displayContent;
+        this.formattedContent = formattedContent;
     }
 }

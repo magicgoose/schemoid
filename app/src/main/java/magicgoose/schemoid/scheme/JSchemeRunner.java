@@ -19,6 +19,7 @@ import java.util.concurrent.Future;
 import jscheme.JScheme;
 import jsint.Evaluator;
 import jsint.U;
+import magicgoose.schemoid.TheApp;
 import magicgoose.schemoid.util.ReactiveList;
 import rx.functions.Func1;
 
@@ -52,7 +53,12 @@ public class JSchemeRunner<TLogItem> implements ISchemeRunner<TLogItem> {
         this.handler = handler;
         this.logTransform = logTransform;
         submitInitTask();
-        logSysInfo("Welcome to Schemoid\nYour commands and evaluation results will appear here");
+        logSysInfo("Welcome to Schemoid "+ formatVersionInfo() +"\nYour commands and evaluation results will appear here");
+    }
+
+    private String formatVersionInfo() {
+        final TheApp app = TheApp.getInstance();
+        return app.getVersionName() + " (" + app.getVersionNumber() + ")";
     }
 
     private void submitInitTask() {

@@ -1,6 +1,8 @@
 package magicgoose.schemoid;
 
 import android.app.Application;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
@@ -16,6 +18,8 @@ public class TheApp extends Application {
     private static TheApp Instance;
     private ISchemeRunner<SelectableSchemeLogItem> schemeRunner;
     private final Handler handler = new Handler(Looper.getMainLooper());
+    private String VERSION_NAME;
+    private int VERSION_NUMBER;
 
     public static TheApp getInstance() {
         return Instance;
@@ -36,6 +40,14 @@ public class TheApp extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        final PackageInfo pInfo;
+        try {
+            pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
+            VERSION_NAME = pInfo.versionName;
+            VERSION_NUMBER = pInfo.versionCode;
+        } catch (PackageManager.NameNotFoundException e) {
+            throw new RuntimeException(e);
+        }
         Instance = this;
     }
 
@@ -49,5 +61,13 @@ public class TheApp extends Application {
                 e.printStackTrace();
             }
         }
+    }
+
+    public String getVersionName() {
+        return VERSION_NAME;
+    }
+
+    public int getVersionNumber() {
+        return VERSION_NUMBER;
     }
 }

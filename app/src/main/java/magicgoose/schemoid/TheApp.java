@@ -30,8 +30,7 @@ public class TheApp extends Application {
 
     @NonNull
     private ISchemeRunner<SelectableSchemeLogItem> createSchemeRunner() {
-        return new JSchemeRunner<>(getResources(), this.handler,
-                x -> new SelectableSchemeLogItem(x.kind, x.displayContent, x.formattedContent));
+        return new JSchemeRunner<>(getResources(), this.handler, SelectableSchemeLogItem::new);
     }
 
     @Override

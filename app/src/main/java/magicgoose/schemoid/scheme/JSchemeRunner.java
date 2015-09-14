@@ -9,6 +9,8 @@ import android.text.TextUtils;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -28,11 +30,17 @@ public class JSchemeRunner<TLogItem> implements ISchemeRunner<TLogItem> {
     private final Func1<SchemeLogItem, TLogItem> logTransform;
 
     private JScheme jsc = createJScheme();
+    private StringWriter outputWriter;
+//    private StringWriter errorWriter;
 
     @NonNull
     private JScheme createJScheme() {
         final Evaluator e = new Evaluator();
         e.INTERRUPTABLE = true;
+        outputWriter = new StringWriter();
+        e.setOutput(new PrintWriter(outputWriter, false));
+//        errorWriter = new StringWriter();
+//        e.setError(new PrintWriter(outputWriter, false));
         return new JScheme(e);
     }
 
@@ -88,17 +96,8 @@ public class JSchemeRunner<TLogItem> implements ISchemeRunner<TLogItem> {
 
     @Override
     public void pushInput(final String input) {
-        appendToLog(new SchemeLogItem(SchemeLogItemKind.Input, formatInput(input), input));
+        appendToLog(new SchemeLogItem(SchemeLogItemKind.Input, input));
         submitTask(() -> doProcessString(input));
-    }
-
-    private String formatInput(final String input) {
-        final String[] lines = input.split("\\n");
-        lines[0] = "> " + lines[0];
-        for (int i = 1; i < lines.length; i++) {
-            lines[i] = "  " + lines[i];
-        }
-        return TextUtils.join("\n", lines);
     }
 
     private void doProcessString(final String input) {
@@ -109,30 +108,43 @@ public class JSchemeRunner<TLogItem> implements ISchemeRunner<TLogItem> {
     private SchemeLogItem doEvalString(final String input) {
         try {
             final Object ret = jsc.eval(input);
+            final String output = getOutput();
             if (ret == jsint.Primitive.DO_NOT_DISPLAY) {
-                return outputLogItem("<ok>");
+                return outputLogItem(output, "<ok>");
             } else {
-                return outputLogItem(jsint.U.stringify(ret));
+                return outputLogItem(output, jsint.U.stringify(ret));
             }
         } catch (final jscheme.SchemeException e) {
-            return errorLogItem(e.getMessage());
+            return errorLogItem(getOutput(), e.getMessage());
         } catch (final jsint.BacktraceException e) {
-            return errorLogItem(e.getMessage());
+            return errorLogItem(getOutput(), e.getMessage());
         } catch (final Exception e) {
-            return errorLogItem(e.toString());
+            return errorLogItem(getOutput(), e.toString());
         } catch (final Error e) {
-            return errorLogItem(e.toString());
+            return errorLogItem(getOutput(), e.toString());
         } catch (final Throwable e) {
-            return errorLogItem(e.toString());
+            return errorLogItem(getOutput(), e.toString());
         }
     }
 
-    private SchemeLogItem errorLogItem(final String text) {
-        return new SchemeLogItem(SchemeLogItemKind.ErrorOutput, text, text);
+    private String getOutput() {
+        final String result = outputWriter.toString();
+        outputWriter.getBuffer().setLength(0);
+        return result;
     }
 
-    private SchemeLogItem outputLogItem(final String text) {
-        return new SchemeLogItem(SchemeLogItemKind.Output, text, text);
+    private SchemeLogItem errorLogItem(final String output, final String text) {
+        return new SchemeLogItem(SchemeLogItemKind.ErrorOutput, mergeOutput(output, text));
+    }
+
+    private String mergeOutput(final String output, final String value) {
+        if (output.length() == 0)
+            return value;
+        return output + '\n' + value;
+    }
+
+    private SchemeLogItem outputLogItem(final String output, final String text) {
+        return new SchemeLogItem(SchemeLogItemKind.Output, mergeOutput(output, text));
     }
 
     @Override
@@ -142,7 +154,7 @@ public class JSchemeRunner<TLogItem> implements ISchemeRunner<TLogItem> {
     }
 
     private void logSysInfo(final String message) {
-        final SchemeLogItem logItem = new SchemeLogItem(SchemeLogItemKind.SystemInfo, message, message);
+        final SchemeLogItem logItem = new SchemeLogItem(SchemeLogItemKind.SystemInfo, message);
         appendToLog(logItem);
     }
 

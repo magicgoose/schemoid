@@ -7,7 +7,6 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
@@ -82,7 +81,7 @@ public class ReplFragment extends Fragment implements BackKeyHandler {
         final StringBuilder sb = new StringBuilder();
         for (final SelectableSchemeLogItem selectableSchemeLogItem : log) {
             if (selectableSchemeLogItem.isSelected) {
-                sb.append(selectableSchemeLogItem.formattedContent);
+                sb.append(selectableSchemeLogItem.content);
                 sb.append('\n');
             }
         }
@@ -300,7 +299,7 @@ public class ReplFragment extends Fragment implements BackKeyHandler {
 
         public void updateFor(final SelectableSchemeLogItem logItem) {
             itemView.setBackgroundResource(getLogItemColorResId(logItem.kind));
-            textView.setText(logItem.displayContent);
+            textView.setText(logItem.getDisplayContent());
             textView.setTypeface(Typeface.create(textView.getTypeface(), getLogItemTextStyle(logItem.kind)));
             if (logItem.isSelected) {
                 overlayView.setBackgroundResource(R.drawable.log_item_overlay_selected);

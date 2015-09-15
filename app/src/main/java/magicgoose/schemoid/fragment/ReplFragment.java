@@ -20,6 +20,7 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -348,6 +349,16 @@ public class ReplFragment extends Fragment implements BackKeyHandler {
 
         @Override
         public void afterTextChanged(final Editable s) {
+        }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        try {
+            TheApp.getInstance().saveLog(log);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

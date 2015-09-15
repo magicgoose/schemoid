@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 import android.content.res.Resources;
 import android.os.Handler;
 import android.support.annotation.NonNull;
-import android.text.TextUtils;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -53,13 +52,19 @@ public class JSchemeRunner<TLogItem> implements ISchemeRunner<TLogItem> {
     private final ExecutorService es = Executors.newSingleThreadExecutor();
     private ArrayList<Future<?>> tasks = new ArrayList<>();
 
-    public JSchemeRunner(Resources resources, Handler handler, SchemeParser schemeParser, Func1<SchemeLogItem, TLogItem> logTransform) {
+    public JSchemeRunner(Resources resources, Handler handler, SchemeParser schemeParser, Func1<SchemeLogItem, TLogItem> logTransform, List<TLogItem> savedLog) {
         this.resources = resources;
         this.handler = handler;
         this.schemeParser = schemeParser;
         this.logTransform = logTransform;
         submitInitTask();
-        logSysInfo("Welcome to Schemoid "+ formatVersionInfo() +"\nYour commands and evaluation results will appear here");
+
+        if (savedLog == null || savedLog.size() == 0) {
+            logSysInfo("Welcome to Schemoid " + formatVersionInfo() + "\nYour commands and evaluation results will appear here");
+        } else {
+            log.addAll(savedLog);
+            notifyReset();
+        }
     }
 
     private String formatVersionInfo() {
@@ -202,7 +207,14 @@ public class JSchemeRunner<TLogItem> implements ISchemeRunner<TLogItem> {
         doAbort();
         jsc = createJScheme();
         submitInitTask();
-        logSysInfo("Interpreter was reset");
+        notifyReset();
+    }
+
+    private void notifyReset() {
+        final SchemeLogItem newLogItem = new SchemeLogItem(SchemeLogItemKind.SystemInfo, "Interpreter was reset");
+        if (log.get(log.size() - 1).equals(newLogItem))
+            return;
+        appendToLog(newLogItem);
     }
 
     @Override

@@ -33,4 +33,23 @@ public class SchemeLogItem {
         }
         return displayContent;
     }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (!(o instanceof SchemeLogItem)) return false;
+
+        final SchemeLogItem that = (SchemeLogItem) o;
+
+        if (kind != that.kind) return false;
+        return content.equals(that.content);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = kind.hashCode();
+        result = 31 * result + content.hashCode();
+        return result;
+    }
 }

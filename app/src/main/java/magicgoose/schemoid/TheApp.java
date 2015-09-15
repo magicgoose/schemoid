@@ -6,12 +6,14 @@ import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
+import android.widget.Toast;
 
 import java.io.IOException;
 
 import magicgoose.schemoid.fragment.SelectableSchemeLogItem;
 import magicgoose.schemoid.scheme.ISchemeRunner;
 import magicgoose.schemoid.scheme.JSchemeRunner;
+import magicgoose.schemoid.scheme.parser.SimpleSchemeParser;
 
 public class TheApp extends Application {
 
@@ -20,6 +22,7 @@ public class TheApp extends Application {
     private final Handler handler = new Handler(Looper.getMainLooper());
     private String VERSION_NAME;
     private int VERSION_NUMBER;
+    private Toast toast;
 
     public static TheApp getInstance() {
         return Instance;
@@ -34,7 +37,7 @@ public class TheApp extends Application {
 
     @NonNull
     private ISchemeRunner<SelectableSchemeLogItem> createSchemeRunner() {
-        return new JSchemeRunner<>(getResources(), this.handler, SelectableSchemeLogItem::new);
+        return new JSchemeRunner<>(getResources(), this.handler, new SimpleSchemeParser(), SelectableSchemeLogItem::new);
     }
 
     @Override
@@ -69,5 +72,15 @@ public class TheApp extends Application {
 
     public int getVersionNumber() {
         return VERSION_NUMBER;
+    }
+
+    public void showToast(final int stringResId) {
+        if (toast == null) {
+            toast = Toast.makeText(this, stringResId, Toast.LENGTH_SHORT);
+        } else {
+            toast.setText(stringResId);
+            toast.setDuration(Toast.LENGTH_SHORT);
+        }
+        toast.show();
     }
 }

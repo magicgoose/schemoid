@@ -27,6 +27,7 @@ import magicgoose.schemoid.R;
 import magicgoose.schemoid.TheApp;
 import magicgoose.schemoid.scheme.ISchemeRunner;
 import magicgoose.schemoid.scheme.SchemeLogItemKind;
+import magicgoose.schemoid.scheme.exception.MalformedInputException;
 import magicgoose.schemoid.util.ClipboardUtil;
 import magicgoose.schemoid.util.ReactiveList;
 import rx.Subscription;
@@ -207,8 +208,12 @@ public class ReplFragment extends Fragment implements BackKeyHandler {
         final String text = this.codeEditText.getText().toString().trim();
         if (text.length() == 0)
             return;
-        this.codeEditText.getText().clear();
-        this.schemeRunner.pushInput(text);
+        try {
+            this.schemeRunner.pushInput(text);
+            this.codeEditText.getText().clear();
+        } catch (MalformedInputException e) {
+            TheApp.getInstance().showToast(R.string.malformed_input);
+        }
     }
 
     @Override

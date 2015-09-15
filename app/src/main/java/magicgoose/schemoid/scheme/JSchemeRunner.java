@@ -12,6 +12,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -20,6 +21,9 @@ import jscheme.JScheme;
 import jsint.Evaluator;
 import jsint.U;
 import magicgoose.schemoid.TheApp;
+import magicgoose.schemoid.scheme.exception.MalformedInputException;
+import magicgoose.schemoid.scheme.parser.SchemeExpr;
+import magicgoose.schemoid.scheme.parser.SchemeParser;
 import magicgoose.schemoid.util.ReactiveList;
 import rx.functions.Func1;
 
@@ -28,6 +32,7 @@ public class JSchemeRunner<TLogItem> implements ISchemeRunner<TLogItem> {
     private final ReactiveList<TLogItem> log = new ReactiveList<>();
     private final Resources resources;
     private final Handler handler;
+    private final SchemeParser schemeParser;
     private final Func1<SchemeLogItem, TLogItem> logTransform;
 
     private JScheme jsc = createJScheme();
@@ -48,9 +53,10 @@ public class JSchemeRunner<TLogItem> implements ISchemeRunner<TLogItem> {
     private final ExecutorService es = Executors.newSingleThreadExecutor();
     private ArrayList<Future<?>> tasks = new ArrayList<>();
 
-    public JSchemeRunner(Resources resources, Handler handler, Func1<SchemeLogItem, TLogItem> logTransform) {
+    public JSchemeRunner(Resources resources, Handler handler, SchemeParser schemeParser, Func1<SchemeLogItem, TLogItem> logTransform) {
         this.resources = resources;
         this.handler = handler;
+        this.schemeParser = schemeParser;
         this.logTransform = logTransform;
         submitInitTask();
         logSysInfo("Welcome to Schemoid "+ formatVersionInfo() +"\nYour commands and evaluation results will appear here");
@@ -101,9 +107,17 @@ public class JSchemeRunner<TLogItem> implements ISchemeRunner<TLogItem> {
     }
 
     @Override
-    public void pushInput(final String input) {
-        appendToLog(new SchemeLogItem(SchemeLogItemKind.Input, input));
-        submitTask(() -> doProcessString(input));
+    public void pushInput(final String input) throws MalformedInputException {
+        final List<SchemeExpr> exprs = schemeParser.parseAll(input);
+        if (exprs.size() == 0) {
+            throw new MalformedInputException();
+        }
+
+        for (final SchemeExpr expr : exprs) {
+            final String exprText = expr.clip(input);
+            appendToLog(new SchemeLogItem(SchemeLogItemKind.Input, exprText));
+            submitTask(() -> doProcessString(exprText));
+        }
     }
 
     private void doProcessString(final String input) {

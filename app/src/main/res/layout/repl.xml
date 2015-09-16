@@ -15,7 +15,7 @@
 
     <include layout="@layout/divider_horizontal_thick"/>
 
-    <EditText
+    <magicgoose.schemoid.view.SelectableEditText
         style="@style/CodeInput"
         android:id="@+id/code_input"
         />

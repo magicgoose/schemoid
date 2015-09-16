@@ -10,38 +10,47 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
-import android.text.TextWatcher;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.style.StyleSpan;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.EditText;
 import android.widget.TextView;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import magicgoose.schemoid.R;
 import magicgoose.schemoid.TheApp;
 import magicgoose.schemoid.scheme.ISchemeRunner;
 import magicgoose.schemoid.scheme.SchemeLogItemKind;
 import magicgoose.schemoid.scheme.exception.MalformedInputException;
+import magicgoose.schemoid.scheme.parser.SchemeParser;
+import magicgoose.schemoid.scheme.parser.SchemeToken;
 import magicgoose.schemoid.util.ClipboardUtil;
 import magicgoose.schemoid.util.ReactiveList;
+import magicgoose.schemoid.view.SelectableEditText;
 import rx.Subscription;
+import rx.android.schedulers.AndroidSchedulers;
 
 public class ReplFragment extends Fragment implements BackKeyHandler {
 
-    private EditText codeEditText;
+    private SelectableEditText codeEditText;
     private ISchemeRunner<SelectableSchemeLogItem> schemeRunner;
     private Subscription schemeOutputSubscription;
     private LogAdapter logAdapter;
     private RecyclerView logView;
     private ReactiveList<SelectableSchemeLogItem> log;
     private int selectedCount;
+    private SchemeParser schemeParser;
+    private List<SchemeToken> tokens;
+    private final List<Subscription> resumeSubscriptions = new ArrayList<>();
 
     @Override
     public void onCreate(final Bundle savedInstanceState) {
@@ -124,8 +133,7 @@ public class ReplFragment extends Fragment implements BackKeyHandler {
         super.onViewCreated(view, savedInstanceState);
         final FragmentActivity ctx = getActivity();
 
-        codeEditText = (EditText) view.findViewById(R.id.code_input);
-        codeEditText.addTextChangedListener(new CodeEditTextWatcher());
+        codeEditText = (SelectableEditText) view.findViewById(R.id.code_input);
 
         view.findViewById(R.id.eb_eval).setOnClickListener(this::evalClick);
 
@@ -141,9 +149,74 @@ public class ReplFragment extends Fragment implements BackKeyHandler {
         logView.setAdapter(logAdapter);
 
         schemeRunner = TheApp.getInstance().getSchemeRunner();
+        schemeParser = TheApp.getInstance().getSchemeParser();
         log = schemeRunner.getLog();
         schemeOutputSubscription = bindAdapterToList(logAdapter, log);
         selectedCount = getSelectedCount(log);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        resumeSubscriptions.add(codeEditText.getTextObservable()
+                .debounce(500, TimeUnit.MILLISECONDS)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(this::onInputTextChanged));
+
+        resumeSubscriptions.add(codeEditText.getBackspaceObservable()
+                .subscribe(this::onBackspace));
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        for (final Subscription subscription : resumeSubscriptions) {
+            subscription.unsubscribe();
+        }
+        resumeSubscriptions.clear();
+        try {
+            TheApp.getInstance().saveLog(log);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void onBackspace(Void dummy) {
+        final Editable text = codeEditText.getText();
+        final int selectionStart = codeEditText.getSelectionStart();
+        if (selectionStart > 0) {
+            if (text.length() > selectionStart &&
+                    text.charAt(selectionStart - 1) == '(' &&
+                    text.charAt(selectionStart) == ')') {
+                text.delete(selectionStart - 1, selectionStart + 1);
+            } else {
+                text.delete(selectionStart - 1, selectionStart);
+            }
+        }
+    }
+
+    private void onInputTextChanged(String newText) {
+        tokens = schemeParser.tokenize(newText);
+        updateSpans();
+    }
+
+    private void updateSpans() {
+        final String text = codeEditText.getText().toString();
+        final SpannableString spannableString = new SpannableString(text);
+        final int selectionStart = codeEditText.getSelectionStart();
+        final int selectionEnd = codeEditText.getSelectionEnd();
+
+        for (final SchemeToken token : this.tokens) {
+            switch (token.kind) {
+                case ClosingParen:
+                case OpeningParen:
+                    spannableString.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), token.start, token.end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+        }
+
+        codeEditText.setText(spannableString);
+        codeEditText.setSelection(selectionStart, selectionEnd);
     }
 
     private int getSelectedCount(final ReactiveList<SelectableSchemeLogItem> log) {
@@ -177,8 +250,24 @@ public class ReplFragment extends Fragment implements BackKeyHandler {
     }
 
     private void parenClick(final View view) {
-        final String paren = view.getId() == R.id.eb_left_paren ? "(" : ")";
-        codeEditText.getText().insert(codeEditText.getSelectionStart(), paren);
+        final boolean isOpeningParen = view.getId() == R.id.eb_left_paren;
+        final String paren = isOpeningParen ? "(" : ")";
+        final Editable text = codeEditText.getText();
+        final int length = text.length();
+
+        final int selectionStart = codeEditText.getSelectionStart();
+
+        if (isOpeningParen) {
+            text.insert(selectionStart, paren);
+            text.insert(selectionStart + 1, ")");
+            moveCursor(-1);
+        } else {
+            if (selectionStart < length && text.charAt(selectionStart) == ')') {
+                moveCursor(1);
+            } else {
+                text.insert(selectionStart, paren);
+            }
+        }
     }
 
     @Override
@@ -186,6 +275,7 @@ public class ReplFragment extends Fragment implements BackKeyHandler {
         super.onDestroyView();
         this.codeEditText = null;
         this.schemeRunner = null;
+        this.schemeParser = null;
         schemeOutputSubscription.unsubscribe();
         schemeOutputSubscription = null;
         logAdapter = null;
@@ -335,30 +425,6 @@ public class ReplFragment extends Fragment implements BackKeyHandler {
                     return R.color.log_background_info_output;
             }
             throw new IllegalArgumentException();
-        }
-    }
-
-    private class CodeEditTextWatcher implements TextWatcher {
-        @Override
-        public void beforeTextChanged(final CharSequence s, final int start, final int count, final int after) {
-        }
-
-        @Override
-        public void onTextChanged(final CharSequence s, final int start, final int before, final int count) {
-        }
-
-        @Override
-        public void afterTextChanged(final Editable s) {
-        }
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        try {
-            TheApp.getInstance().saveLog(log);
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 }

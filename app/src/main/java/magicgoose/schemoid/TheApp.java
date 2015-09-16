@@ -21,6 +21,7 @@ import magicgoose.schemoid.fragment.SelectableSchemeLogItem;
 import magicgoose.schemoid.scheme.ISchemeRunner;
 import magicgoose.schemoid.scheme.JSchemeRunner;
 import magicgoose.schemoid.scheme.SchemeLogItemKind;
+import magicgoose.schemoid.scheme.parser.SchemeParser;
 import magicgoose.schemoid.scheme.parser.SimpleSchemeParser;
 
 public class TheApp extends Application {
@@ -32,6 +33,7 @@ public class TheApp extends Application {
     private int VERSION_NUMBER;
     private Toast toast;
     private static final String LogFileName = "log.bin";
+    private SchemeParser schemeParser;
 
     public static TheApp getInstance() {
         return Instance;
@@ -46,7 +48,7 @@ public class TheApp extends Application {
 
     @NonNull
     private ISchemeRunner<SelectableSchemeLogItem> createSchemeRunner() {
-        return new JSchemeRunner<>(getResources(), this.handler, new SimpleSchemeParser(), SelectableSchemeLogItem::new, loadLog());
+        return new JSchemeRunner<>(getResources(), this.handler, getSchemeParser(), SelectableSchemeLogItem::new, loadLog());
     }
 
     @Override
@@ -84,14 +86,19 @@ public class TheApp extends Application {
     }
 
     public void showToast(final int stringResId) {
+        showToast(getString(stringResId));
+    }
+
+    public void showToast(final String s) {
         if (toast == null) {
-            toast = Toast.makeText(this, stringResId, Toast.LENGTH_SHORT);
+            toast = Toast.makeText(this, s, Toast.LENGTH_SHORT);
         } else {
-            toast.setText(stringResId);
+            toast.setText(s);
             toast.setDuration(Toast.LENGTH_SHORT);
         }
         toast.show();
     }
+
 
     @SuppressLint("NewApi")
     public void saveLog(final List<SelectableSchemeLogItem> log) throws IOException {
@@ -119,5 +126,12 @@ public class TheApp extends Application {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    public SchemeParser getSchemeParser() {
+        if (this.schemeParser == null) {
+            schemeParser = new SimpleSchemeParser();
+        }
+        return this.schemeParser;
     }
 }

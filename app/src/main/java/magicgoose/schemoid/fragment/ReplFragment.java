@@ -12,7 +12,8 @@ import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.SpannableString;
 import android.text.Spanned;
-import android.text.style.StyleSpan;
+import android.text.style.BackgroundColorSpan;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -24,20 +25,19 @@ import android.widget.TextView;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import magicgoose.schemoid.R;
 import magicgoose.schemoid.TheApp;
 import magicgoose.schemoid.scheme.ISchemeRunner;
 import magicgoose.schemoid.scheme.SchemeLogItemKind;
 import magicgoose.schemoid.scheme.exception.MalformedInputException;
+import magicgoose.schemoid.scheme.parser.HighlightRegion;
 import magicgoose.schemoid.scheme.parser.SchemeParser;
 import magicgoose.schemoid.scheme.parser.SchemeToken;
 import magicgoose.schemoid.util.ClipboardUtil;
 import magicgoose.schemoid.util.ReactiveList;
 import magicgoose.schemoid.view.SelectableEditText;
 import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
 
 public class ReplFragment extends Fragment implements BackKeyHandler {
 
@@ -160,9 +160,10 @@ public class ReplFragment extends Fragment implements BackKeyHandler {
         super.onResume();
 
         resumeSubscriptions.add(codeEditText.getTextObservable()
-                .debounce(500, TimeUnit.MILLISECONDS)
-                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(this::onInputTextChanged));
+
+        resumeSubscriptions.add(codeEditText.getSelectionStartObservable()
+                .subscribe(this::onInputSelectionChanged));
 
         resumeSubscriptions.add(codeEditText.getBackspaceObservable()
                 .subscribe(this::onBackspace));
@@ -198,25 +199,66 @@ public class ReplFragment extends Fragment implements BackKeyHandler {
 
     private void onInputTextChanged(String newText) {
         tokens = schemeParser.tokenize(newText);
-        updateSpans();
+        postUpdateSpans();
+    }
+
+    private final Runnable updateSpansRunnable = this::updateSpans;
+
+    private void postUpdateSpans() {
+        if (codeEditText == null) return;
+        codeEditText.removeCallbacks(updateSpansRunnable);
+        codeEditText.post(updateSpansRunnable);
+    }
+
+    private void onInputSelectionChanged(Void dummy) {
+        postUpdateSpans();
     }
 
     private void updateSpans() {
+        Log.w("ReplFragment", "updateSpans() called");
+        if (tokens == null)
+            return;
+
+        codeEditText.eventsDisabled = true;
+
         final String text = codeEditText.getText().toString();
-        final SpannableString spannableString = new SpannableString(text);
         final int selectionStart = codeEditText.getSelectionStart();
         final int selectionEnd = codeEditText.getSelectionEnd();
 
-        for (final SchemeToken token : this.tokens) {
-            switch (token.kind) {
-                case ClosingParen:
-                case OpeningParen:
-                    spannableString.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), token.start, token.end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            }
+        final SpannableString spannableString = new SpannableString(text);
+
+        final HighlightRegion highlightRegion = schemeParser.getHighlightRegionForParens(tokens, selectionStart);
+
+        if (highlightRegion.start != null || highlightRegion.end != null) {
+            final int midStart = highlightRegion.start == null ? 0 : highlightRegion.start.start;
+            final int midEnd = highlightRegion.end == null ? text.length() : Math.min(text.length(), highlightRegion.end.end);
+            spannableString.setSpan(
+                    backgroundColorSpan(R.color.parens_region_highlight),
+                    midStart, midEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+
+        if (highlightRegion.start != null) {
+            spannableString.setSpan(
+                    backgroundColorSpan(R.color.parens_pair_highlight),
+                    highlightRegion.start.start, highlightRegion.start.start + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+            );
+        }
+
+        if (highlightRegion.end != null) {
+            spannableString.setSpan(
+                    backgroundColorSpan(R.color.parens_pair_highlight),
+                    highlightRegion.end.end - 1, highlightRegion.end.end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+            );
         }
 
         codeEditText.setText(spannableString);
         codeEditText.setSelection(selectionStart, selectionEnd);
+
+        codeEditText.post(() -> codeEditText.eventsDisabled = false);
+    }
+
+    private BackgroundColorSpan backgroundColorSpan(int colorId) {
+        return new BackgroundColorSpan(getResources().getColor(colorId));
     }
 
     private int getSelectedCount(final ReactiveList<SelectableSchemeLogItem> log) {
@@ -259,26 +301,17 @@ public class ReplFragment extends Fragment implements BackKeyHandler {
 
         // sometimes spannable string builder fails for no obvious reason when trying to insert text
         // hence this stupid code
-        try {
-            if (isOpeningParen) {
-                text.insert(selectionStart, paren);
-                text.insert(selectionStart + 1, ")");
-                moveCursor(-1);
-            } else {
-                if (selectionStart < length && text.charAt(selectionStart) == ')') {
-                    moveCursor(1);
-                } else {
-                    text.insert(selectionStart, paren);
-                }
-            }
-        }
-        catch (Exception e) {
-            if (selectionStart >= length) {
-                text.append(paren);
+        if (isOpeningParen) {
+            text.insert(selectionStart, "()");
+            moveCursor(-1);
+        } else {
+            if (selectionStart < length && text.charAt(selectionStart) == ')') {
+                moveCursor(1);
             } else {
                 text.insert(selectionStart, paren);
             }
         }
+
     }
 
     @Override
@@ -341,7 +374,6 @@ public class ReplFragment extends Fragment implements BackKeyHandler {
 
     @SuppressLint("NewApi")
     private void invalidateSelectedCount() {
-        final boolean isInSelectionMode = selectedCount > 0;
         final FragmentActivity activity = getActivity();
         activity.invalidateOptionsMenu();
     }

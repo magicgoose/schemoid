@@ -14,4 +14,6 @@
     <color name="selection_border">#001cc6</color>
     <color name="selection_highlight">#c0ffffff</color>
     <color name="pressed_highlight">#4a207800</color>
+    <color name="parens_pair_highlight">#5dd28100</color>
+    <color name="parens_region_highlight">#34fff900</color>
 </resources>

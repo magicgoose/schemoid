@@ -1,14 +1,16 @@
 package magicgoose.schemoid.scheme.parser;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import magicgoose.schemoid.util.ListUtil;
+
 // it doesn't care about a lot of things, its main purpose is
 // to provide information for syntax(braces) highlighting and
 // splitting text with several expressions
-// TODO: somehow allow parsing incomplete expressions
 public class SimpleSchemeParser implements SchemeParser {
     private static final Pattern charPattern =
         Pattern.compile("^#\\\\(\\d+|u\\d+|\\D[^\\)\\(\\d\\s]*)");
@@ -49,6 +51,37 @@ public class SimpleSchemeParser implements SchemeParser {
             tokens.add(parseResult);
             start = parseResult.end;
         }
+    }
+
+    @Override
+    public HighlightRegion getHighlightRegionForParens(final List<SchemeToken> tokens, final int caretPosition) {
+        final SchemeToken key = SchemeToken.indexSearchKey(caretPosition);
+        final int bs = Collections.binarySearch(tokens, key);
+        final int index = (bs < 0) ? -bs - 1 : bs;
+
+        final SchemeToken endBound = findCombinationBound(() -> tokens.listIterator(index), false);
+        final SchemeToken beginBound = findCombinationBound(ListUtil.reverseIterator(tokens.listIterator(index)), true);
+
+        return new HighlightRegion(beginBound, endBound);
+    }
+
+    private SchemeToken findCombinationBound(Iterable<SchemeToken> tokens, boolean backwards) {
+        int parenLevel = 0;
+        for (final SchemeToken token : tokens) {
+            switch (token.kind) {
+                case OpeningParen:
+                case ClosingParen:
+                    final int change =
+                            (token.kind == SchemeTokenKind.ClosingParen ^ backwards) ?
+                                    -1 : 1;
+                    parenLevel += change;
+
+                    if (parenLevel < 0)
+                        return token;
+                    break;
+            }
+        }
+        return null;
     }
 
     private SchemeExpr parseOneExpr(final int start, final String input) {

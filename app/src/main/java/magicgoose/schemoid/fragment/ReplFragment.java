@@ -257,13 +257,24 @@ public class ReplFragment extends Fragment implements BackKeyHandler {
 
         final int selectionStart = codeEditText.getSelectionStart();
 
-        if (isOpeningParen) {
-            text.insert(selectionStart, paren);
-            text.insert(selectionStart + 1, ")");
-            moveCursor(-1);
-        } else {
-            if (selectionStart < length && text.charAt(selectionStart) == ')') {
-                moveCursor(1);
+        // sometimes spannable string builder fails for no obvious reason when trying to insert text
+        // hence this stupid code
+        try {
+            if (isOpeningParen) {
+                text.insert(selectionStart, paren);
+                text.insert(selectionStart + 1, ")");
+                moveCursor(-1);
+            } else {
+                if (selectionStart < length && text.charAt(selectionStart) == ')') {
+                    moveCursor(1);
+                } else {
+                    text.insert(selectionStart, paren);
+                }
+            }
+        }
+        catch (Exception e) {
+            if (selectionStart >= length) {
+                text.append(paren);
             } else {
                 text.insert(selectionStart, paren);
             }

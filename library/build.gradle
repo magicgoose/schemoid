@@ -1,0 +1,15 @@
+apply plugin: 'java'
+
+sourceCompatibility = 1.8
+
+apply plugin: 'me.tatarka.retrolambda'
+
+
+
+retrolambda {
+    jvmArgs '-noverify'
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+}

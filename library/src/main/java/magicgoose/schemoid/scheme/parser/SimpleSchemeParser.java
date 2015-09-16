@@ -17,6 +17,8 @@ public class SimpleSchemeParser implements SchemeParser {
     private static final Pattern somethingElsePattern =
         Pattern.compile("^[^'\\(\\)\\s]+");
 
+
+
     @Override
     public List<SchemeExpr> parseAll(final String source) {
         final ArrayList<SchemeExpr> exprs = new ArrayList<>();
@@ -31,6 +33,24 @@ public class SimpleSchemeParser implements SchemeParser {
         }
     }
 
+    @Override
+    public List<SchemeToken> tokenize(final String source) {
+        final ArrayList<SchemeToken> tokens = new ArrayList<>();
+        int start = 0;
+        while (true) {
+            start = skipWhitespace(start, source);
+            if (start >= source.length())
+                return tokens;
+
+            final SchemeToken parseResult = parseOneTokenNoLeadingWhitespace(start, source);
+            if (parseResult == null) {
+                return tokens;
+            }
+            tokens.add(parseResult);
+            start = parseResult.end;
+        }
+    }
+
     private SchemeExpr parseOneExpr(final int start, final String input) {
         final int realStart = skipWhitespace(start, input);
         return parseOneExprNoLeadingWhitespace(realStart, input);
@@ -41,11 +61,22 @@ public class SimpleSchemeParser implements SchemeParser {
             return null;
 
         return parseFirstMatch(start, input,
-            this::parseQuotedExpr,
-            this::parseChar,
-            this::parseString,
-            this::parseList,
-            this::parseSomething
+                this::parseQuotedExpr,
+                this::parseChar,
+                this::parseString,
+                this::parseList,
+                this::parseSomething
+        );
+    }
+
+    private SchemeToken parseOneTokenNoLeadingWhitespace(final int start, final String input) {
+        return parseFirstMatchToken(start, input,
+                this::parseQuoteToken,
+                this::parseCharToken,
+                this::parseStringToken,
+                this::parseOpeningParenToken,
+                this::parseClosingParenToken,
+                this::parseSomethingToken
         );
     }
 
@@ -63,15 +94,40 @@ public class SimpleSchemeParser implements SchemeParser {
 
     private SchemeExpr parseChar(final int start, final String input) {
         return parseRegex(start, input,
-            charPattern, SchemeExprKind.LiteralChar);
+                charPattern, SchemeExprKind.LiteralChar);
     }
     private SchemeExpr parseString(final int start, final String input) {
         return parseRegex(start, input,
-            stringPattern, SchemeExprKind.LiteralString);
+                stringPattern, SchemeExprKind.LiteralString);
     }
     private SchemeExpr parseSomething(final int start, final String input) {
         return parseRegex(start, input,
             somethingElsePattern, SchemeExprKind.SomethingElse);
+    }
+
+    private SchemeToken parseCharToken(final int start, final String input) {
+        return parseTokenRegex(start, input,
+                charPattern, SchemeTokenKind.LiteralChar);
+    }
+    private SchemeToken parseStringToken(final int start, final String input) {
+        return parseTokenRegex(start, input,
+                stringPattern, SchemeTokenKind.LiteralString);
+    }
+    private SchemeToken parseSomethingToken(final int start, final String input) {
+        return parseTokenRegex(start, input,
+                somethingElsePattern, SchemeTokenKind.SomethingElse);
+    }
+    private SchemeToken parseOpeningParenToken(final int start, final String input) {
+        return parseTokenChar(start, input,
+                '(', SchemeTokenKind.OpeningParen);
+    }
+    private SchemeToken parseClosingParenToken(final int start, final String input) {
+        return parseTokenChar(start, input,
+                ')', SchemeTokenKind.ClosingParen);
+    }
+    private SchemeToken parseQuoteToken(final int start, final String input) {
+        return parseTokenChar(start, input,
+                '\'', SchemeTokenKind.Quote);
     }
 
     private SchemeExpr parseList(final int start, final String input) {
@@ -101,8 +157,6 @@ public class SimpleSchemeParser implements SchemeParser {
         }
     }
 
-
-
     private SchemeExpr parseRegex(final int start, final String input, final Pattern pattern, final SchemeExprKind kind) {
         final Matcher matcher = pattern.matcher(input.substring(start));
         if (matcher.find()) {
@@ -112,9 +166,35 @@ public class SimpleSchemeParser implements SchemeParser {
         return null;
     }
 
+    private SchemeToken parseTokenRegex(final int start, final String input, final Pattern pattern, final SchemeTokenKind tokenKind) {
+        final Matcher matcher = pattern.matcher(input.substring(start));
+        if (matcher.find()) {
+            final int end = matcher.end();
+            return new SchemeToken(start, end + start, tokenKind);
+        }
+        return null;
+    }
+
+    private SchemeToken parseTokenChar(final int start, final String input, final char theChar, final SchemeTokenKind tokenKind) {
+        if (input.charAt(start) == theChar) {
+            return new SchemeToken(start, start + 1, tokenKind);
+        }
+        return null;
+    }
+
     private SchemeExpr parseFirstMatch(final int start, final String input, ParserFun... options) {
         for (final ParserFun option : options) {
             final SchemeExpr expr = option.tryParse(start, input);
+            if (expr != null) {
+                return expr;
+            }
+        }
+        return null;
+    }
+
+    private SchemeToken parseFirstMatchToken(final int start, final String input, TokenizerFun... options) {
+        for (final TokenizerFun option : options) {
+            final SchemeToken expr = option.tryParse(start, input);
             if (expr != null) {
                 return expr;
             }
@@ -132,5 +212,8 @@ public class SimpleSchemeParser implements SchemeParser {
 
     interface ParserFun {
         SchemeExpr tryParse(final int start, final String input);
+    }
+    interface TokenizerFun {
+        SchemeToken tryParse(final int start, final String input);
     }
 }

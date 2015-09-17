@@ -24,6 +24,7 @@ import android.widget.TextView;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import magicgoose.schemoid.R;
@@ -41,6 +42,7 @@ import rx.Subscription;
 
 public class ReplFragment extends Fragment implements BackKeyHandler {
 
+    public static final String TAG = ReplFragment.class.getSimpleName();
     private SelectableEditText codeEditText;
     private ISchemeRunner<SelectableSchemeLogItem> schemeRunner;
     private Subscription schemeOutputSubscription;
@@ -159,14 +161,16 @@ public class ReplFragment extends Fragment implements BackKeyHandler {
     public void onResume() {
         super.onResume();
 
-        resumeSubscriptions.add(codeEditText.getTextObservable()
-                .subscribe(this::onInputTextChanged));
-
-        resumeSubscriptions.add(codeEditText.getSelectionStartObservable()
-                .subscribe(this::onInputSelectionChanged));
-
-        resumeSubscriptions.add(codeEditText.getBackspaceObservable()
-                .subscribe(this::onBackspace));
+        resumeSubscriptions.addAll(Arrays.asList(
+                codeEditText.getTextObservable()
+                        .subscribe(this::onInputTextChanged),
+                codeEditText.getSelectionStartObservable()
+                        .subscribe(this::onInputSelectionChanged),
+                codeEditText.getBackspaceObservable()
+                        .subscribe(this::onBackspace),
+                codeEditText.getNewlineObservable()
+                        .subscribe(this::onNewline)
+        ));
     }
 
     @Override
@@ -183,6 +187,46 @@ public class ReplFragment extends Fragment implements BackKeyHandler {
         }
     }
 
+    private void onNewline(Void dummy) {
+        Log.w(TAG, "onNewline()");
+        final int selectionStart = codeEditText.getSelectionStart();
+        final Editable text = codeEditText.getText();
+        if (tokens == null) {
+            tokens = schemeParser.tokenize(text.toString());
+        }
+        final int indentLength = getIndentLength(tokens, selectionStart);
+        final String textToInsert = getNewlineString(indentLength);
+        text.insert(selectionStart, textToInsert);
+    }
+
+    private String getNewlineString(final int indentLength) {
+        final int indentSize = 2;
+        final int spaceCount = indentSize * indentLength;
+        final StringBuilder sb = new StringBuilder(1 + spaceCount);
+        sb.append('\n');
+        for (int i = 0; i < spaceCount; i++) {
+            sb.append(' ');
+        }
+        return sb.toString();
+    }
+
+    private int getIndentLength(final List<SchemeToken> tokens, final int cursor) {
+        int result = 0;
+        for (final SchemeToken token : tokens) {
+            if (token.end > cursor)
+                break;
+            switch (token.kind) {
+                case OpeningParen:
+                    ++result;
+                    break;
+                case ClosingParen:
+                    --result;
+                    break;
+            }
+        }
+        return Math.max(0, result);
+    }
+
     private void onBackspace(Void dummy) {
         final Editable text = codeEditText.getText();
         final int selectionStart = codeEditText.getSelectionStart();
@@ -191,6 +235,19 @@ public class ReplFragment extends Fragment implements BackKeyHandler {
                     text.charAt(selectionStart - 1) == '(' &&
                     text.charAt(selectionStart) == ')') {
                 text.delete(selectionStart - 1, selectionStart + 1);
+            } else if (Character.isWhitespace(text.charAt(selectionStart - 1))) {
+                int i = selectionStart - 1;
+                while (i - 1 >= 0) {
+                    final char ch = text.charAt(i - 1);
+                    if (Character.isWhitespace(ch)) {
+                        --i;
+                    } else {
+                        break;
+                    }
+                    if (ch == '\n') // there has to be a way to delete only some of the lines
+                        break;
+                }
+                text.delete(i, selectionStart);
             } else {
                 text.delete(selectionStart - 1, selectionStart);
             }
@@ -198,6 +255,7 @@ public class ReplFragment extends Fragment implements BackKeyHandler {
     }
 
     private void onInputTextChanged(String newText) {
+        Log.w(TAG, "onInputTextChanged(…)");
         tokens = schemeParser.tokenize(newText);
         postUpdateSpans();
     }
@@ -215,7 +273,7 @@ public class ReplFragment extends Fragment implements BackKeyHandler {
     }
 
     private void updateSpans() {
-        Log.w("ReplFragment", "updateSpans() called");
+        Log.w(TAG, "updateSpans()");
         if (tokens == null)
             return;
 

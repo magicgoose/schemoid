@@ -433,7 +433,7 @@ public class ReplFragment extends Fragment implements BackKeyHandler {
     @SuppressLint("NewApi")
     private void invalidateSelectedCount() {
         final FragmentActivity activity = getActivity();
-        activity.invalidateOptionsMenu();
+        activity.supportInvalidateOptionsMenu();
     }
 
     private class LogAdapter extends RecyclerView.Adapter<LogItemVH> implements View.OnClickListener {
